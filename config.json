@@ -1,0 +1,23 @@
+{
+  "storages": {
+    "mem":  "mem://",
+    "r": "redis://localhost/0"
+  },
+  "rules": {
+    "/posts/{id}": {
+      "posts-{id}:key": {
+        "ttl": "1m",
+        "storage": "r"
+      },
+      "posts-{id}:fail": {
+        "ttl": "2h",
+        "storage": "r",
+        "type": "fail"
+      }
+    }
+  },
+  "options": {
+    "host": "http://localhost:8888",
+    "timeout": "1m30s"
+  }
+}
