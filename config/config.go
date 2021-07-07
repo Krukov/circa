@@ -52,7 +52,7 @@ func AdjustJsonConfig (r *handler.Runner, path string) error {
 					return errors.New("unknown storage")
 				}
 			}
-			r.AddHandler(rulePath, handler.NewHandler(rule, storage, temp, defRequest, ruleOptions.Methods))
+			r.AddHandlers(rulePath, handler.NewHandler(rule, storage, temp, defRequest, ruleOptions.Methods))
 		}
 	}
 	r.SetProxy(c.Options.Target, timeout)

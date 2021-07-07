@@ -17,7 +17,7 @@ func TestRunner_Handle(t *testing.T) {
 
 	r := NewRunner(fakeCall)
 	h := NewHandler(&rules.ProxyRule{}, &storages.Memory{}, "key", &message.Request{}, []string{"get"})
-	r.AddHandler("/", h)
+	r.AddHandlers("/", h)
 
 	tests := []struct {
 		name     string

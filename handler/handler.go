@@ -9,7 +9,6 @@ import (
 	"time"
 )
 
-const DEFAULT_HADDLER_NAME = "_default"
 var ALL_METHODS = map[string]bool{"get": true, "post": true, "head": true, "put": true, "patch": true, "options": true}
 
 type handler struct {
@@ -43,6 +42,12 @@ func NewHandler (rule rules.Rule, storage storages.Storage, keyTemplate string, 
 	}
 }
 
+func (h *handler) ToCall (call message.Requester)  message.Requester {
+	return func(request *message.Request) (*message.Response, error) {
+		return h.Run(request, call)
+	}
+}
+
 func (h *handler) Run (request *message.Request, call message.Requester) (*message.Response, error) {
 	if _, ok := h.methods[strings.ToLower(request.Method)]; !ok {
 		return call(request)
@@ -73,45 +78,49 @@ func NewRunner(makeRequest message.Requester) *Runner {
 }
 
 
-func (r *Runner) AddHandler (route string, handler *handler) {
-	r.handlers[ruleName(route)] = append(r.handlers[ruleName(route)], handler)
+func (r *Runner) AddHandlers (route string, handlers ...*handler) {
+	r.handlers[ruleName(route)] = append(r.handlers[ruleName(route)], handlers...)
 	r.router.addRule(route, ruleName(route))
 }
 
 func (r *Runner) SetProxy (target string, timeout time.Duration) {
 	defRequest := &message.Request{Timeout: timeout, Host: target}
 	h := &handler{rule: &rules.ProxyRule{},  defaultRequest: defRequest, methods: ALL_METHODS}
-	r.handlers[DEFAULT_HADDLER_NAME] = []*handler{h}
+	r.AddHandlers("*", h)
 }
 
 func (r *Runner) Handle (request *message.Request) (resp *message.Response, err error) {
-	ruleName_, params, err := r.router.getRoute(request.Path)
+	ruleNames, params, err := r.router.resolve(request.Path)
 	if err != nil {
 		if err == NotFound {
 			request.Logger.Debug().Msg("Route for request not found. Forward request")
-			ruleName_ = DEFAULT_HADDLER_NAME
 		} else {
 			return nil, err
 		}
 	}
-	request.Logger = request.Logger.With().Str("route", string(ruleName_)).Bool("cached", false).Logger()
-	handlers_, ok := r.handlers[ruleName_]
-	if !ok {
-		request.Logger.Warn().Msg("Rule found but no handlers with this rule name")
-		return nil, NotFound
+	request.Logger = request.Logger.With().Str("route", string(ruleNames[0])).Bool("cached", false).Logger()
+
+	makeRequest := r.makeRequest
+	for _, rule := range ruleNames {
+
+		handlers_, ok := r.handlers[rule]
+		if !ok {
+			request.Logger.Warn().Msg("Rule found but no handlers with this rule name")
+			return nil, NotFound
+		}
+		request.Params = params
+		for _, handler_ := range handlers_ {
+			makeRequest = handler_.ToCall(makeRequest)
+		}
 	}
-	request.Params = params
-	for _, handler_ := range handlers_ {
-		resp, err = handler_.Run(request, r.makeRequest)
-		if err != nil {
-			return nil, err
-		}
-		request.Logger = request.Logger.With().Str("status", strconv.Itoa(resp.Status)).Logger()
-		if resp.CachedKey != "" {
-			request.Logger = request.Logger.With().Bool("cached", true).Str("cacheKey", resp.CachedKey).Logger()
-			resp.Headers["Circa-Cache-Key"] = resp.CachedKey
-			return
-		}
+	resp, err = makeRequest(request)
+	if err != nil {
+		return nil, err
+	}
+	request.Logger = request.Logger.With().Str("status", strconv.Itoa(resp.Status)).Logger()
+	if resp.CachedKey != "" {
+		request.Logger = request.Logger.With().Bool("cached", true).Str("cacheKey", resp.CachedKey).Logger()
+		resp.Headers["X-Circa-Cache-Key"] = resp.CachedKey
 	}
 	return
 }

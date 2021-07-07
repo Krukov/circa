@@ -7,15 +7,19 @@ import (
 
 func createRouter() *node {
 	t := newTrie()
-	t.addRule("/", "ROOT", false)
-	t.addRule("user/me", "USER_ME",false)
-	t.addRule("user/{id}", "USER_DETAIL", false)
-	t.addRule("posts/{id}/info", "POSTS_DETAIL", false)
-	t.addRule("posts/{id}/last", "POSTS_LAST", true)
-	t.addRule("posts/*", "POSTS_PASS", false)
-	t.addRule("user/{id}/top", "USER_TOP_LIST", false)
-	t.addRule("user/{id}/top/{item}", "USER_TOP_ITEM", false)
-	t.addRule("/user/", "USER_LIST", false)
+	t.addRule("/", "ROOT")
+	t.addRule("user/me", "USER_ME")
+	t.addRule("user/{id}", "USER_DETAIL")
+	t.addRule("user/{id}/top", "USER_TOP_LIST")
+	t.addRule("user/{id}/top/{item}", "USER_TOP_ITEM")
+	t.addRule("/user/", "USER_LIST")
+
+	t.addRule("posts/last/{id}", "POSTS_LAST")
+	t.addRule("posts/*", "POSTS_PASS")
+	t.addRule("posts/{id}/*", "POSTS_PASS2")
+	t.addRule("posts/{id}", "POSTS_DETAIL")
+	t.addRule("posts/{id}/info", "POSTS_DETAIL_INFO")
+	t.addRule("posts/info/{id}", "POSTS_DETAIL_INFO2")
 	return t
 }
 
@@ -25,76 +29,91 @@ func Test_node_getRoute(t1 *testing.T) {
 	tests := []struct {
 		name       string
 		gotPath    string
-		wantName   string
+		wantNames  []ruleName
 		wantParams map[string]string
-		wantErr    bool
 	}{
-		{"user list", "/user", "USER_LIST", map[string]string{}, false},
-		{"user list", "/user/", "USER_LIST", map[string]string{}, false},
-		{"user list", "user/", "USER_LIST", map[string]string{}, false},
+		{"user list", "/user", []ruleName{"USER_LIST"}, map[string]string{}},
+		{"user list", "/user/", []ruleName{"USER_LIST"}, map[string]string{}},
+		{"user list", "user/", []ruleName{"USER_LIST"}, map[string]string{}},
 
-		{"user detail", "/user/1", "USER_DETAIL", map[string]string{"id": "1"}, false},
-		{"user detail", "/user/test/", "USER_DETAIL", map[string]string{"id": "test"}, false},
+		{"user detail", "/user/1", []ruleName{"USER_DETAIL"}, map[string]string{"id": "1"}},
+		{"user detail", "/user/test/", []ruleName{"USER_DETAIL"}, map[string]string{"id": "test"}},
 
-		{"user me", "/user/me/", "USER_ME", map[string]string{}, false},
-		{"user me", "/user/me", "USER_ME", map[string]string{}, false},
+		{"user me", "/user/me/", []ruleName{"USER_ME"}, map[string]string{}},
+		{"user me", "/user/me", []ruleName{"USER_ME"}, map[string]string{}},
 
-		{"user top", "/user/1/top", "USER_TOP_LIST", map[string]string{"id": "1"}, false},
-		{"user top", "/user/me/top", "USER_TOP_LIST", map[string]string{"id": "me"}, false},
-		{"user top list", "/user/1/top/1", "USER_TOP_ITEM", map[string]string{"id": "1", "item": "1"}, false},
+		{"user top", "/user/1/top", []ruleName{"USER_TOP_LIST"}, map[string]string{"id": "1"}},
+		{"user top", "/user/me/top", []ruleName{"USER_TOP_LIST"}, map[string]string{"id": "me"}},
+		{"user top list", "/user/1/top/1", []ruleName{"USER_TOP_ITEM"}, map[string]string{"id": "1", "item": "1"}},
 
-		{"posts info", "/posts/1/info", "POSTS_DETAIL", map[string]string{"id": "1"}, false},
-		{"posts info", "/posts/1/inf", "POSTS_PASS", map[string]string{}, false},
+		{"posts info", "/posts/1/info", []ruleName{"POSTS_DETAIL_INFO", "POSTS_PASS", "POSTS_PASS2"}, map[string]string{"id": "1"}},
+		{"posts last", "/posts/last/1", []ruleName{"POSTS_LAST", "POSTS_PASS"}, map[string]string{"id": "1"}},
+		{"posts detail", "/posts/1", []ruleName{"POSTS_DETAIL", "POSTS_PASS", "POSTS_PASS2"}, map[string]string{"id": "1"}},
 
-		{"not find", "/user/top/me", "", map[string]string{}, true},
-		{"not find", "/use/me", "", map[string]string{}, true},
-		{"not find", "/user/1/1", "", map[string]string{}, true},
-		{"not find", "/user/1/2/top/", "", map[string]string{}, true},
-		{"not find", "/posts", "", map[string]string{}, true},
-		{"not find", "?", "", map[string]string{}, true},
+		{"posts pass", "/posts/1/inf/some/here", []ruleName{"POSTS_PASS", "POSTS_PASS2"}, map[string]string{}},
+		{"posts pass 2", "/posts/1/inf", []ruleName{"POSTS_PASS", "POSTS_PASS2"}, map[string]string{}},
+		{"posts pass 3", "/posts/", []ruleName{"POSTS_PASS"}, map[string]string{}},
+
 	}
 
 	for _, tt := range tests {
 		t1.Run(tt.name, func(t1 *testing.T) {
 
-			gotName, gotParams, err := t.getRoute(tt.gotPath)
-			if (err != nil) != tt.wantErr {
-				t1.Errorf("getRoute() error = %v, wantErr %v", err, tt.wantErr)
+			gotNames, gotParams, err := t.resolve(tt.gotPath)
+			if err != nil {
+				t1.Errorf("resolve() error = %v", err)
 				return
 			}
-			if string(gotName) != tt.wantName {
-				t1.Errorf("getRoute() gotName = %v, want %v", gotName, tt.wantName)
+			if len(tt.wantNames) > 0 && !reflect.DeepEqual(gotNames, tt.wantNames) {
+				t1.Errorf("resolve() gotNames = %v, want %v", gotNames, tt.wantNames)
 			}
 			if len(tt.wantParams) > 0 && !reflect.DeepEqual(gotParams, tt.wantParams) {
-				t1.Errorf("getRoute() gotParams = %v, want %v", gotParams, tt.wantParams)
+				t1.Errorf("resolve() gotParams = %v, want %v", gotParams, tt.wantParams)
 			}
 		})
 	}
 }
 
-func Test_node_remove(t1 *testing.T) {
+func Test_node_getRoute_Error(t1 *testing.T) {
 	t := createRouter()
 
-	t.removeRule("USER_TOP_ITEM")
+	tests := []struct {
+		name       string
+		gotPath    string
+		wantName   string
+		wantParams map[string]string
+	}{
 
-	path, _, err := t.getRoute("user/1/top/test")
-	if err == nil {
-		t1.Errorf("the route steal exists %v", path)
+		{"not find", "/user/top/me", "", map[string]string{}},
+		{"not find", "/use/me", "", map[string]string{}},
+		{"not find", "/user/1/1", "", map[string]string{}},
+		{"not find", "/user/1/2/top/", "", map[string]string{}},
+		{"not find", "?", "", map[string]string{}},
+	}
+
+	for _, tt := range tests {
+		t1.Run(tt.name, func(t1 *testing.T) {
+			_, _, err := t.resolve(tt.gotPath)
+			if err == nil {
+				t1.Errorf("resolve() error = %v, wantErr", err)
+			}
+		})
 	}
 }
+
 
 func BenchmarkRoot(b *testing.B) {
 
 	t := createRouter()
 	for n := 0; n < b.N; n++ {
-		t.getRoute("/")
+		t.resolve("/")
 	}
 }
 
 func BenchmarkNotFound(b *testing.B) {
 	t := createRouter()
 	for n := 0; n < b.N; n++ {
-		t.getRoute("user/me/this/path/do/not/exists")
+		t.resolve("user/me/this/path/do/not/exists")
 	}
 }
 
@@ -102,6 +121,14 @@ func BenchmarkLastNode(b *testing.B) {
 	b.ReportAllocs()
 	t := createRouter()
 	for n := 0; n < b.N; n++ {
-		t.getRoute("/user/1/top/1")
+		t.resolve("/user/1/top/1")
+	}
+}
+
+func BenchmarkMultiRuleNode(b *testing.B) {
+	b.ReportAllocs()
+	t := createRouter()
+	for n := 0; n < b.N; n++ {
+		t.resolve("/posts/1/info")
 	}
 }
