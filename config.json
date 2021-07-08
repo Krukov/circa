@@ -8,7 +8,9 @@
       "posts-{id}:key": {
         "ttl": "1m",
         "storage": "r"
-      },
+      }
+    },
+    "/posts/*": {
       "posts-{id}:fail": {
         "ttl": "2h",
         "storage": "r",

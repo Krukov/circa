@@ -42,11 +42,11 @@ func NewHandler(rule rules.Rule, storage storages.Storage, keyTemplate string, d
 func (h *handler) ToCall(call message.Requester, route string) message.Requester {
 	return func(request *message.Request) (*message.Response, error) {
 		resp, hit, err := h.Run(request, call)
-		status := "set"
+		status := "pass"
 		if err != nil {
 			status = "error"
 		} else if hit {
-			status = "get"
+			status = "hit"
 		}
 		routeHandlerCount.WithLabelValues(h.rule.String(), route, h.keyTemplate, status).Inc()
 		return resp, err
@@ -114,8 +114,6 @@ func (r *Runner) Handle(request *message.Request) (resp *message.Response, err e
 	makeRequest := r.makeRequest
 
 	for _, rule := range ruleNames {
-		request.Logger = request.Logger.With().Str("route", string(rule)).Logger()
-
 		handlers_, ok := r.handlers[rule]
 		if !ok {
 			request.Logger.Warn().Msg("Rule found but no handlers with this rule name")
@@ -123,6 +121,7 @@ func (r *Runner) Handle(request *message.Request) (resp *message.Response, err e
 		}
 		request.Params = params
 		for _, handler_ := range handlers_ {
+			request.Logger.Info().Msgf("ADD %v - %v", rule, handler_.rule.String())
 			makeRequest = handler_.ToCall(makeRequest, string(rule))
 		}
 	}
