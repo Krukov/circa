@@ -56,7 +56,7 @@ func (s *Redis) Get(key string) (*message.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(key) == 0 {
+	if len(keys) == 0 {
 		return nil, NotFound
 	}
 	body := keys["body"]

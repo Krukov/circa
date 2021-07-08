@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"github.com/rs/zerolog/log"
 
@@ -10,7 +11,7 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-func Run(h *handler.Runner, port string)  {
+func Run(cancel context.CancelFunc, h *handler.Runner, port string) *fasthttp.Server {
 	requestHandler := func(ctx *fasthttp.RequestCtx) {
 		request := requestFromHttpRequest(ctx)
 		logger := log.With().
@@ -36,9 +37,15 @@ func Run(h *handler.Runner, port string)  {
 
 	// Start HTTP server.
 	log.Info().Str("port", port).Msg("Start server")
-	if err := fasthttp.ListenAndServe(fmt.Sprintf(":%s", port), requestHandler); err != nil {
-		log.Fatal().Err(err).Msg("Can't start proxy")
-	}
+	srv := fasthttp.Server{Handler: requestHandler}
+	go func() {
+		defer cancel()
+		if err := srv.ListenAndServe(fmt.Sprintf(":%s", port)); err != nil {
+			log.Fatal().Err(err).Msg("Can't start proxy")
+		}
+		log.Info().Msg("Shutdown server")
+	}()
+	return &srv
 }
 
 func requestFromHttpRequest(ctx *fasthttp.RequestCtx) *message.Request {

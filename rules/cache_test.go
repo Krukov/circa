@@ -13,6 +13,9 @@ import (
 type mockStorage struct {
 	mock.Mock
 }
+func (s *mockStorage) String() string {
+	return "mock"
+}
 
 func (s *mockStorage) Set(key string, value *message.Response, ttl time.Duration) (bool, error) {
 	args := s.Called(key, value, ttl)
@@ -53,7 +56,7 @@ func TestCacheRule_Process(t *testing.T) {
 			r := &CacheRule{
 				TTL: time.Second,
 			}
-			got, err := r.Process(tt.req, "key", storage, func (request *message.Request) (*message.Response, error) {
+			got, _, err := r.Process(tt.req, "key", storage, func (request *message.Request) (*message.Response, error) {
 				return &message.Response{Body: []byte(`data`), Status: 200}, nil
 			})
 			storage.AssertExpectations(t)

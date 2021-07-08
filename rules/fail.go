@@ -14,26 +14,31 @@ func (r *FailRule) String() string {
 	return "fail"
 }
 
-func (r *FailRule) Process(request *message.Request, key string, storage storages.Storage, call message.Requester) (resp *message.Response, err error) {
+func (r *FailRule) Process(request *message.Request, key string, storage storages.Storage, call message.Requester) (resp *message.Response, hit bool, err error) {
+	var errStorage error
 	resp, err = call(request)
-	if err != nil || resp.Status >= 500 {
+	if err != nil {
 		request.Logger.Debug().Msg("error on call api, try to find in cache")
 
-		resp, err = storage.Get(key)
-		if err == nil {
+		resp, errStorage = storage.Get(key)
+		if errStorage == nil {
 			resp.CachedKey = key
+			hit = true
+			err = nil
 			return
 		} else {
-			if err != storages.NotFound {
+			if errStorage != storages.NotFound {
 				request.Logger.Warn().Msgf("error on get value %v", err)
 			}
 		}
+	}
+	if resp != nil && resp.CachedKey == "" {
 		_, setErr := storage.Set(key, resp, r.TTL)
 		if setErr != nil {
-			request.Logger.Warn().Msgf("error on set value %v", err)
+			request.Logger.Warn().Msgf("error on set value %v", setErr)
 		}
 	}
-	return resp, err
+	return
 }
 
 

@@ -15,24 +15,26 @@ func (r *CacheRule) String() string {
 }
 
 
-func (r *CacheRule) Process(request *message.Request, key string, storage storages.Storage, call message.Requester) (resp *message.Response, err error) {
+func (r *CacheRule) Process(request *message.Request, key string, storage storages.Storage, call message.Requester) (resp *message.Response, hit bool, err error) {
 	resp, err = storage.Get(key)
 	if err == nil {
 		resp.CachedKey = key
+		hit = true
 		return
 	} else {
 		if err != storages.NotFound {
 			request.Logger.Warn().Msgf("error on get value %v", err)
 		}
+		err = nil
 		resp, err = call(request)
 		if err == nil {
 			_, setErr := storage.Set(key, resp, r.TTL)
 			if setErr != nil {
-				request.Logger.Warn().Msgf("error on set value %v", err)
+				request.Logger.Warn().Msgf("error on set value %v", setErr)
 			}
 		}
 	}
-	return resp, err
+	return
 }
 
 

@@ -61,7 +61,6 @@ Configuration look like
     "refresh_query": "_refresh",
     "skip_query": "_skip",
     "manage_port": 8888,
-    "metrics_port": 8080,
     "metrics_path": "/-/_metrics"
   }
 }
@@ -85,12 +84,17 @@ roadmap
    4.3) hit cache [-]
    4.2) early cache [-]
 5.0) Metrics and monitoring [Progress]
+   - Storage metrics
+   - server metrics
+   - requester metrics
+   - Handlers metrics [*]
+   
 5.1) k8 integration (sidecar?)
 5) Manage config with http api
 6) Manage config with backend 
-7) Proxy headers 
+7) Proxy headers  - Fix gzip error or think about 
 
-9) Rules for all - global rules for example fail for all 
+9) Rules for all - global rules for example fail for all  [*]
 x) Do TODOs
 
 ```json
