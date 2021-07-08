@@ -2,15 +2,16 @@ package storages
 
 import (
 	"context"
-	"github.com/go-redis/redis/v8"
 	"strconv"
 	"time"
+
+	"github.com/go-redis/redis/v8"
 
 	"circa/message"
 )
 
 type Redis struct {
-	client *redis.Client
+	client  *redis.Client
 	timeout time.Duration
 }
 
@@ -71,4 +72,3 @@ func (s *Redis) Get(key string) (*message.Response, error) {
 	}
 	return &message.Response{Status: statusInt, Body: []byte(body), Headers: keys}, nil
 }
-

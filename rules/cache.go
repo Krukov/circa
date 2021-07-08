@@ -7,13 +7,12 @@ import (
 )
 
 type CacheRule struct {
-	TTL  time.Duration
+	TTL time.Duration
 }
 
 func (r *CacheRule) String() string {
 	return "cache"
 }
-
 
 func (r *CacheRule) Process(request *message.Request, key string, storage storages.Storage, call message.Requester) (resp *message.Response, hit bool, err error) {
 	resp, err = storage.Get(key)
@@ -36,5 +35,3 @@ func (r *CacheRule) Process(request *message.Request, key string, storage storag
 	}
 	return
 }
-
-

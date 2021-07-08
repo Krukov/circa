@@ -3,10 +3,11 @@ package server
 import (
 	"context"
 	"fmt"
+
 	"github.com/rs/zerolog/log"
 
-	"circa/message"
 	"circa/handler"
+	"circa/message"
 
 	"github.com/valyala/fasthttp"
 )
@@ -50,12 +51,12 @@ func Run(cancel context.CancelFunc, h *handler.Runner, port string) *fasthttp.Se
 
 func requestFromHttpRequest(ctx *fasthttp.RequestCtx) *message.Request {
 	headers := map[string]string{}
-	ctx.Request.Header.VisitAll(func (key, value []byte) {
+	ctx.Request.Header.VisitAll(func(key, value []byte) {
 		headers[string(key)] = string(value)
 	})
 	return &message.Request{
-		Method: string(ctx.Method()),
-		Path: string(ctx.Path()),
+		Method:  string(ctx.Method()),
+		Path:    string(ctx.Path()),
 		Headers: headers,
 	}
 }

@@ -1,8 +1,9 @@
 package message
 
 import (
-	"github.com/rs/zerolog"
 	"time"
+
+	"github.com/rs/zerolog"
 )
 
 type Requester func(*Request) (*Response, error)

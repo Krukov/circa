@@ -3,16 +3,17 @@ package rules
 import (
 	"circa/message"
 	"errors"
-	"github.com/stretchr/testify/mock"
 	"reflect"
 	"testing"
 	"time"
-)
 
+	"github.com/stretchr/testify/mock"
+)
 
 type mockStorage struct {
 	mock.Mock
 }
+
 func (s *mockStorage) String() string {
 	return "mock"
 }
@@ -40,8 +41,8 @@ func TestCacheRule_Process(t *testing.T) {
 		resp    *message.Response
 		wantErr bool
 	}{
-		{"simple", &message.Request{Method: "GET"}, "cached", &message.Response{Body: []byte(`mock`), Status: 200, CachedKey: "key"}, false },
-		{"no cache", &message.Request{Method: "GET"}, "", &message.Response{Body: []byte(`data`), Status: 200}, false },
+		{"simple", &message.Request{Method: "GET"}, "cached", &message.Response{Body: []byte(`mock`), Status: 200, CachedKey: "key"}, false},
+		{"no cache", &message.Request{Method: "GET"}, "", &message.Response{Body: []byte(`data`), Status: 200}, false},
 	}
 
 	for _, tt := range tests {
@@ -56,7 +57,7 @@ func TestCacheRule_Process(t *testing.T) {
 			r := &CacheRule{
 				TTL: time.Second,
 			}
-			got, _, err := r.Process(tt.req, "key", storage, func (request *message.Request) (*message.Response, error) {
+			got, _, err := r.Process(tt.req, "key", storage, func(request *message.Request) (*message.Response, error) {
 				return &message.Response{Body: []byte(`data`), Status: 200}, nil
 			})
 			storage.AssertExpectations(t)

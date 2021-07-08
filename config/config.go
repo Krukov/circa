@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func AdjustJsonConfig (r *handler.Runner, path string) error {
+func AdjustJsonConfig(r *handler.Runner, path string) error {
 	jsonRaw, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
@@ -60,8 +60,7 @@ func AdjustJsonConfig (r *handler.Runner, path string) error {
 
 }
 
-
-func getRuleFromOptions (rule Rule) (rules.Rule, error) {
+func getRuleFromOptions(rule Rule) (rules.Rule, error) {
 	switch rule.Type {
 	case "proxy":
 		return convertToProxyRule(rule)
@@ -85,7 +84,6 @@ func convertToFailRule(rule Rule) (*rules.FailRule, error) {
 	ttl, err := timeFromString(rule.TTL)
 	return &rules.FailRule{TTL: ttl}, err
 }
-
 
 func timeFromString(in string) (time.Duration, error) {
 	if in == "" {

@@ -17,6 +17,7 @@ type node struct {
 
 var NotFound = errors.New("no route")
 var DownRuleError = errors.New("down Rule")
+
 const STAR = "*"
 const PLACEHOLDER = "."
 
@@ -24,20 +25,20 @@ func newTrie() *node {
 	return &node{name: "root", children: map[string]*node{}, params: []string{}, downRules: []ruleName{}}
 }
 
-func (t *node) addRule (rulePath string, rule ruleName) {
+func (t *node) addRule(rulePath string, rule ruleName) {
 	rulePath = strings.Trim(rulePath, "/")
 	sPath := strings.Split(rulePath, "/")
 	t.addPrefixs(sPath, rule)
 }
 
-func (t *node) setDownRule (rule ruleName) {
+func (t *node) setDownRule(rule ruleName) {
 	t.downRules = append(t.downRules, rule)
 	for _, c := range t.children {
 		c.setDownRule(rule)
 	}
 }
 
-func (t *node) addPrefixs (prefixs []string, rule ruleName) {
+func (t *node) addPrefixs(prefixs []string, rule ruleName) {
 	if len(prefixs) == 0 {
 		return
 	}
@@ -55,7 +56,7 @@ func (t *node) addPrefixs (prefixs []string, rule ruleName) {
 }
 
 // Add children to node with prefix
-func (t *node) addPrefix (prefix string) *node {
+func (t *node) addPrefix(prefix string) *node {
 	name, param := getNameStar(prefix) // like {id} -> PLACEHOLDER, id ; or test -> test, nil
 	children, ok := t.children[name]
 	if !ok {
@@ -75,8 +76,8 @@ func getNameStar(prefix string) (string, string) {
 	if len(prefix) == 0 {
 		return prefix, ""
 	}
-	if prefix[0] == '{' && prefix[len(prefix) - 1] == '}' {
-		return PLACEHOLDER, prefix[1:len(prefix) - 1]
+	if prefix[0] == '{' && prefix[len(prefix)-1] == '}' {
+		return PLACEHOLDER, prefix[1 : len(prefix)-1]
 	}
 	return prefix, ""
 }
@@ -99,7 +100,7 @@ func (t *node) resolve(path string) (names []ruleName, params map[string]string,
 	return
 }
 
-func (t *node) getNode (path []string, params map[string]string) (*node, map[string]string, error) {
+func (t *node) getNode(path []string, params map[string]string) (*node, map[string]string, error) {
 	nameToFind := path[0]
 
 	if children, ok := t.children[nameToFind]; ok {

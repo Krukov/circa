@@ -35,4 +35,3 @@ func (s *Memory) Get(key string) (*message.Response, error) {
 	}
 	return value, nil
 }
-

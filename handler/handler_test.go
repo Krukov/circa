@@ -7,11 +7,11 @@ import (
 	"testing"
 )
 
-func fakeCall (r *message.Request) (*message.Response, error) {
+func fakeCall(r *message.Request) (*message.Response, error) {
 	return &message.Response{Status: 100}, nil
 }
 
-type MyRule struct {}
+type MyRule struct{}
 
 func (r *MyRule) String() string {
 	return "my"
@@ -20,8 +20,6 @@ func (r *MyRule) String() string {
 func (r *MyRule) Process(request *message.Request, key string, storage storages.Storage, call message.Requester) (*message.Response, bool, error) {
 	return &message.Response{Status: 200, CachedKey: "test", Headers: map[string]string{}}, false, nil
 }
-
-
 
 func TestRunner_Handle(t *testing.T) {
 

@@ -3,19 +3,19 @@ package config
 import "encoding/json"
 
 type GlobalOptions struct {
-	Target   string `json:"host"`
-	Timeout  string `json:"timeout"`
+	Target  string `json:"host"`
+	Timeout string `json:"timeout"`
 }
 
 type Rule struct {
-	Type     string   `json:"type"`
+	Type string `json:"type"`
 
-	Timeout  string   `json:"timeout"`
-	Methods  []string `json:"methods"`
-	Storage  string   `json:"storage"`
+	Timeout string   `json:"timeout"`
+	Methods []string `json:"methods"`
+	Storage string   `json:"storage"`
 
-	TTL      string   `json:"ttl"`
-	EarlyTTL string   `json:"early_ttl"`
+	TTL          string `json:"ttl"`
+	EarlyTTL     string `json:"early_ttl"`
 	CacheControl string `json:"cache_control"`
 }
 
@@ -26,8 +26,7 @@ type config struct {
 	Options  GlobalOptions              `json:"options"`
 }
 
-
-func newFromJson (in []byte) (*config, error) {
+func newFromJson(in []byte) (*config, error) {
 	c := &config{}
 	if err := json.Unmarshal(in, &c); err != nil {
 		return nil, err

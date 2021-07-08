@@ -7,7 +7,6 @@ import (
 const START_RUNE = '{'
 const END_RUNE = '}'
 
-
 func formatTemplate(template string, params map[string]string) string {
 	if !strings.ContainsRune(template, START_RUNE) {
 		return template

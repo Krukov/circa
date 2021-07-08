@@ -3,6 +3,7 @@ package server
 import (
 	"circa/message"
 	"fmt"
+
 	"github.com/valyala/fasthttp"
 )
 
@@ -25,4 +26,3 @@ func responseFor(ctx *fasthttp.RequestCtx, response *message.Response) {
 	}
 	fmt.Fprintf(ctx, string(response.Body))
 }
-

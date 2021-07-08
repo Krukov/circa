@@ -12,18 +12,15 @@ import (
 var ALL_METHODS = map[string]bool{"get": true, "post": true, "head": true, "put": true, "patch": true, "options": true}
 
 type handler struct {
-
 	keyTemplate string
-	rule rules.Rule
-	storage storages.Storage
+	rule        rules.Rule
+	storage     storages.Storage
 
 	defaultRequest *message.Request
-	methods map[string]bool
-
-
+	methods        map[string]bool
 }
 
-func NewHandler (rule rules.Rule, storage storages.Storage, keyTemplate string, defaultRequest *message.Request, methods []string,
+func NewHandler(rule rules.Rule, storage storages.Storage, keyTemplate string, defaultRequest *message.Request, methods []string,
 ) *handler {
 	methodsMap := map[string]bool{}
 	if len(methods) > 0 {
@@ -34,15 +31,15 @@ func NewHandler (rule rules.Rule, storage storages.Storage, keyTemplate string, 
 		methodsMap["get"] = true
 	}
 	return &handler{
-		rule: rule,
-		storage: storage,
-		keyTemplate: keyTemplate,
+		rule:           rule,
+		storage:        storage,
+		keyTemplate:    keyTemplate,
 		defaultRequest: defaultRequest,
-		methods: methodsMap,
+		methods:        methodsMap,
 	}
 }
 
-func (h *handler) ToCall (call message.Requester, route string)  message.Requester {
+func (h *handler) ToCall(call message.Requester, route string) message.Requester {
 	return func(request *message.Request) (*message.Response, error) {
 		resp, hit, err := h.Run(request, call)
 		status := "set"
@@ -56,7 +53,7 @@ func (h *handler) ToCall (call message.Requester, route string)  message.Request
 	}
 }
 
-func (h *handler) Run (request *message.Request, call message.Requester) (*message.Response, bool, error) {
+func (h *handler) Run(request *message.Request, call message.Requester) (*message.Response, bool, error) {
 	if _, ok := h.methods[strings.ToLower(request.Method)]; !ok {
 		resp, err := call(request)
 		return resp, false, err
@@ -81,16 +78,15 @@ type Runner struct {
 	handlers    map[ruleName][]*handler
 	router      *node
 	makeRequest message.Requester
-	target    string
-	timeout time.Duration
+	target      string
+	timeout     time.Duration
 }
 
 func NewRunner(makeRequest message.Requester) *Runner {
 	return &Runner{handlers: map[ruleName][]*handler{}, router: newTrie(), makeRequest: makeRequest}
 }
 
-
-func (r *Runner) AddHandlers (route string, handlers ...*handler) {
+func (r *Runner) AddHandlers(route string, handlers ...*handler) {
 	r.handlers[ruleName(route)] = append(r.handlers[ruleName(route)], handlers...)
 	r.router.addRule(route, ruleName(route))
 	for _, h := range handlers {
@@ -98,12 +94,12 @@ func (r *Runner) AddHandlers (route string, handlers ...*handler) {
 	}
 }
 
-func (r *Runner) SetProxy (target string, timeout time.Duration) {
+func (r *Runner) SetProxy(target string, timeout time.Duration) {
 	r.target = target
 	r.timeout = timeout
 }
 
-func (r *Runner) Handle (request *message.Request) (resp *message.Response, err error) {
+func (r *Runner) Handle(request *message.Request) (resp *message.Response, err error) {
 	request.Host = r.target
 	request.Timeout = r.timeout
 	ruleNames, params, err := r.router.resolve(request.Path)
@@ -142,12 +138,11 @@ func (r *Runner) Handle (request *message.Request) (resp *message.Response, err 
 	return
 }
 
-
 func mergeRequests(req1, req2 *message.Request) *message.Request {
 	if req1.Timeout.Seconds() == 0.0 {
 		req1.Timeout = req2.Timeout
 	}
-	if req1.Host  == "" {
+	if req1.Host == "" {
 		req1.Host = req2.Host
 	}
 	return req1

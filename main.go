@@ -19,15 +19,13 @@ import (
 	"circa/server"
 )
 
-
-func main()  {
+func main() {
 	debug := flag.Bool("debug", false, "dev mode")
 	jsonLogs := flag.Bool("json-out", false, "json logging")
 	configFilePath := flag.String("config", "./config.json", "Config path")
 	port := flag.String("port", "8000", "Listen port")
 	managePort := flag.String("manage-port", "9000", "Listen port")
 	flag.Parse()
-
 
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	if *debug {
@@ -56,17 +54,13 @@ func main()  {
 	circa := server.Run(cancel, r, *port)
 	http.Handle("/metrics", promhttp.Handler())
 	manageSrv := http.Server{Addr: fmt.Sprintf(":%s", *managePort)}
-	go func () {
+	go func() {
 		if err := manageSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Warn().Err(err).Msg("Can't start manage server")
 		}
 	}()
-	<- done
+	<-done
 	manageSrv.Shutdown(ctx)
 	circa.Shutdown()
 
-
 }
-
-
-

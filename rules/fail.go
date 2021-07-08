@@ -7,7 +7,7 @@ import (
 )
 
 type FailRule struct {
-	TTL      time.Duration
+	TTL time.Duration
 }
 
 func (r *FailRule) String() string {
@@ -40,5 +40,3 @@ func (r *FailRule) Process(request *message.Request, key string, storage storage
 	}
 	return
 }
-
-

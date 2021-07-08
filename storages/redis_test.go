@@ -3,13 +3,12 @@ package storages
 import (
 	"circa/message"
 	"context"
-	"github.com/go-redis/redis/v8"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/go-redis/redis/v8"
 )
-
-
 
 func TestRedisStoreSetAndGet(t *testing.T) {
 	rdb := redis.NewClient(&redis.Options{

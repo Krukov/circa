@@ -53,7 +53,6 @@ func Test_node_getRoute(t1 *testing.T) {
 		{"posts pass", "/posts/1/inf/some/here", []ruleName{"POSTS_PASS", "POSTS_PASS2"}, map[string]string{}},
 		{"posts pass 2", "/posts/1/inf", []ruleName{"POSTS_PASS", "POSTS_PASS2"}, map[string]string{}},
 		{"posts pass 3", "/posts/", []ruleName{"POSTS_PASS"}, map[string]string{}},
-
 	}
 
 	for _, tt := range tests {
@@ -100,7 +99,6 @@ func Test_node_getRoute_Error(t1 *testing.T) {
 		})
 	}
 }
-
 
 func BenchmarkRoot(b *testing.B) {
 
