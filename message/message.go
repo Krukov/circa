@@ -18,6 +18,7 @@ type Response struct {
 type Request struct {
 	Method  string
 	Path    string
+	Route   string
 	Headers map[string]string
 
 	Host string

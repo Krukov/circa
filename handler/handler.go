@@ -100,6 +100,7 @@ func (r *Runner) SetProxy(target string, timeout time.Duration) {
 }
 
 func (r *Runner) Handle(request *message.Request) (resp *message.Response, err error) {
+	request.Route = "-"
 	request.Host = r.target
 	request.Timeout = r.timeout
 	ruleNames, params, err := r.router.resolve(request.Path)
@@ -120,8 +121,8 @@ func (r *Runner) Handle(request *message.Request) (resp *message.Response, err e
 			return nil, NotFound
 		}
 		request.Params = params
+		request.Route = string(rule)
 		for _, handler_ := range handlers_ {
-			request.Logger.Info().Msgf("ADD %v - %v", rule, handler_.rule.String())
 			makeRequest = handler_.ToCall(makeRequest, string(rule))
 		}
 	}
@@ -131,7 +132,7 @@ func (r *Runner) Handle(request *message.Request) (resp *message.Response, err e
 	}
 	request.Logger = request.Logger.With().Str("status", strconv.Itoa(resp.Status)).Logger()
 	if resp.CachedKey != "" {
-		request.Logger = request.Logger.With().Str("cacheKey", resp.CachedKey).Logger()
+		request.Logger = request.Logger.With().Str("cache_key", resp.CachedKey).Logger()
 		resp.Headers["X-Circa-Cache-Key"] = resp.CachedKey
 	}
 	return

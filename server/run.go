@@ -3,6 +3,8 @@ package server
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"time"
 
 	"github.com/rs/zerolog/log"
 
@@ -14,7 +16,9 @@ import (
 
 func Run(cancel context.CancelFunc, h *handler.Runner, port string) *fasthttp.Server {
 	requestHandler := func(ctx *fasthttp.RequestCtx) {
+		start := time.Now()
 		request := requestFromHttpRequest(ctx)
+
 		logger := log.With().
 			Str("method", request.Method).
 			Str("path", request.Path).
@@ -25,14 +29,17 @@ func Run(cancel context.CancelFunc, h *handler.Runner, port string) *fasthttp.Se
 		if err != nil {
 			if err == handler.NotFound {
 				responseNotFound(ctx)
-				request.Logger.Warn().Msg("<- Response not found")
+				request.Logger.Warn().Msg("<- Route not found")
 			} else {
 				responseError(ctx, err)
 				request.Logger.Error().Err(err).Msg("<- Response error")
 			}
+			requestsLatency.WithLabelValues(request.Method, request.Route, "error").Observe(time.Since(start).Seconds())
 			return
 		}
 		request.Logger.Info().Msg("<- Response")
+		requestsLatency.WithLabelValues(request.Method, request.Route, strconv.Itoa(response.Status)).Observe(time.Since(start).Seconds())
+		response.Headers["X-Circa-Proxy-Spend"] = strconv.Itoa(int(time.Since(start).Milliseconds()))
 		responseFor(ctx, response)
 	}
 

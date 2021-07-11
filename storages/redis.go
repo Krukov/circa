@@ -21,7 +21,11 @@ func (s *Redis) String() string {
 
 func (s *Redis) Set(key string, value *message.Response, ttl time.Duration) (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
-	defer cancel()
+	start := time.Now()
+	defer func() {
+		cancel()
+		operationHistogram.WithLabelValues(s.String(), "set").Observe(time.Since(start).Seconds())
+	}()
 	values := map[string]string{}
 	for header, hValue := range value.Headers {
 		// todo: do not store all headers ( only
@@ -42,7 +46,11 @@ func (s *Redis) Set(key string, value *message.Response, ttl time.Duration) (boo
 
 func (s *Redis) Del(key string) (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
-	defer cancel()
+	start := time.Now()
+	defer func() {
+		cancel()
+		operationHistogram.WithLabelValues(s.String(), "del").Observe(time.Since(start).Seconds())
+	}()
 	deleted, err := s.client.Del(ctx, "key").Result()
 	if err != nil {
 		return false, err
@@ -51,8 +59,12 @@ func (s *Redis) Del(key string) (bool, error) {
 }
 
 func (s *Redis) Get(key string) (*message.Response, error) {
+	start := time.Now()
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
-	defer cancel()
+	defer func() {
+		cancel()
+		operationHistogram.WithLabelValues(s.String(), "get").Observe(time.Since(start).Seconds())
+	}()
 	keys, err := s.client.HGetAll(ctx, key).Result()
 	if err != nil {
 		return nil, err

@@ -84,50 +84,22 @@ roadmap
    4.3) hit cache [-]
    4.2) early cache [-]
 5.0) Metrics and monitoring [Progress]
-   - Storage metrics
-   - server metrics
-   - requester metrics
+   - Storage metrics [redis]
+   - server metrics [*]
+   - requester metrics [*]
    - Handlers metrics [*]
-   
-5.1) k8 integration (sidecar?)
+    
+Manage server module
+Performance tests
+
+5.1) k8 integration (sidecar? Ingress)
 5) Manage config with http api
 6) Manage config with backend 
-7) Proxy headers  - Fix gzip error or think about 
+7) Proxy headers  - Fix gzip error 
 
 9) Rules for all - global rules for example fail for all  [*]
+10) Lru in mem storage 
 x) Do TODOs
-
-```json
-{
-  "version": "1",
-  "backends": {
-    "{name}": "{dsn}"
-  },
-  "options": {...global_options},
-  "rules": {
-    "{url}": {
-      "options": {
-        ...url_options
-      },
-      "{key}": {
-        ...key_options
-      }
-    }
-  },
-  "post/*": {
-    "retry": {
-      "type": "retry",
-      "backoff": "10s",
-      "count": 3
-    },
-    "cb": {
-      "type": "circuit-breaker",
-      "threshold": 0.5,
-      "ttl": "5m"
-    }
-  }
-}
-```
 
 Backends : memory, redis (client-side too), embended golang kv store
 types: 

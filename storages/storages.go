@@ -35,7 +35,7 @@ func StorageFormDSN(DSN string) (Storage, error) {
 	}
 	switch sURL.Scheme {
 	case "mem":
-		return &Memory{map[string]*message.Response{}}, nil
+		return &Memory{map[string]*message.Response{}, 100}, nil
 	case "redis":
 		p, _ := sURL.User.Password()
 		DB, err = strconv.Atoi(sURL.Path[1:])
