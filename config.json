@@ -1,19 +1,21 @@
 {
   "storages": {
-    "mem":  "mem://",
-    "r": "redis://localhost/0"
+    "r": "redis://localhost/0?timeout=1&pool_size=2"
   },
   "rules": {
     "/posts/{id}": {
       "posts-{id}:key": {
-        "ttl": "1m",
-        "storage": "r"
+        "ttl": "1m"
+      },
+      "invalid": {
+        "methods": ["POST", "DELETE", "PUT", "PATCH"],
+        "type": "invalidation",
+        "key": "posts-{id}:key"
       }
     },
-    "/posts/*": {
-      "posts-{id}:fail": {
-        "ttl": "2h",
-        "storage": "r",
+    "/*": {
+      "{request_path}:fail": {
+        "ttl": "1m",
         "type": "fail"
       }
     }

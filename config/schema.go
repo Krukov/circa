@@ -17,6 +17,8 @@ type Rule struct {
 	TTL          string `json:"ttl"`
 	EarlyTTL     string `json:"early_ttl"`
 	CacheControl string `json:"cache_control"`
+
+	Count int `json:"count"`
 }
 
 type config struct {

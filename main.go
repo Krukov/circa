@@ -58,5 +58,4 @@ func main() {
 	<-done
 	manageSrv.Shutdown(ctx)
 	circa.Shutdown()
-
 }

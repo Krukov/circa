@@ -28,7 +28,6 @@ type Storage interface {
 var NotFound = errors.New("key not found")
 
 func StorageFormDSN(DSN string) (Storage, error) {
-	var DB int
 	sURL, err := url.Parse(DSN)
 	if err != nil {
 		return nil, fmt.Errorf("can't parse storage DSN: %v", err)
@@ -37,23 +36,36 @@ func StorageFormDSN(DSN string) (Storage, error) {
 	case "mem":
 		return &Memory{map[string]*message.Response{}, 100}, nil
 	case "redis":
-		p, _ := sURL.User.Password()
-		DB, err = strconv.Atoi(sURL.Path[1:])
-		if err != nil {
-			return nil, err
-		}
-		host := sURL.Host
-		if !strings.Contains(host, ":") {
-			host += ":6379"
-		}
-		// TODO: All settings - retries, connection max age, pool size and etc
-		rdb := redis.NewClient(&redis.Options{
-			Addr:     host,
-			Password: p,  // no password set
-			DB:       DB, // use default DB
-		})
-		return &Redis{client: rdb, timeout: time.Second}, nil
+		return createRedisStorage(sURL)
 	default:
 		return nil, fmt.Errorf("unknown storage type: %s", sURL.Scheme)
 	}
+}
+
+func createRedisStorage(sURL *url.URL) (*Redis, error) {
+	p, _ := sURL.User.Password()
+	DB, err := strconv.Atoi(sURL.Path[1:])
+	if err != nil {
+		return nil, err
+	}
+	host := sURL.Host
+	if !strings.Contains(host, ":") {
+		host += ":6379"
+	}
+	var poolSize int
+	if _, ok := sURL.Query()["pool_size"]; ok {
+		poolSize, err = strconv.Atoi(sURL.Query()["pool_size"][0])
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     host,
+		Password: p,  // no password set
+		DB:       DB, // use default DB
+		PoolSize: poolSize,
+	})
+
+	return &Redis{client: rdb, timeout: time.Millisecond * 30}, nil
 }

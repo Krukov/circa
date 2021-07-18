@@ -80,16 +80,17 @@ roadmap
 3) Add redis backend [*]
 4) add 
    4.1) fail [*] 
-   4.2) early cache [-]
+   4.2) circuit-breaker [-]
    4.3) hit cache [-]
-   4.2) early cache [-]
-5.0) Metrics and monitoring [Progress]
+   4.4) worm cache [-]
+   4.5) retry [*]
+   
+5.0) Metrics and monitoring [done]
    - Storage metrics [redis]
    - server metrics [*]
    - requester metrics [*]
    - Handlers metrics [*]
     
-Manage server module
 Performance tests
 
 5.1) k8 integration (sidecar? Ingress)

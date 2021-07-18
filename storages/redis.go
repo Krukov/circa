@@ -28,7 +28,6 @@ func (s *Redis) Set(key string, value *message.Response, ttl time.Duration) (boo
 	}()
 	values := map[string]string{}
 	for header, hValue := range value.Headers {
-		// todo: do not store all headers ( only
 		values[header] = hValue
 	}
 	values["body"] = string(value.Body)

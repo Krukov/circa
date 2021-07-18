@@ -18,7 +18,7 @@ func (r *FailRule) Process(request *message.Request, key string, storage storage
 	var errStorage error
 	resp, err = call(request)
 	if err != nil {
-		request.Logger.Debug().Msg("error on call api, try to find in cache")
+		request.Logger.Debug().Msg("error on call api, try ")
 
 		resp, errStorage = storage.Get(key)
 		if errStorage == nil {

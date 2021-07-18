@@ -16,7 +16,7 @@ func responseNotFound(ctx *fasthttp.RequestCtx) {
 func responseError(ctx *fasthttp.RequestCtx, err error) {
 	ctx.Response.SetStatusCode(500)
 	ctx.SetContentType("application/json; charset=utf8")
-	fmt.Fprintf(ctx, "{\"error\": \"%v\"}\n\n", err)
+	fmt.Fprintf(ctx, "{\"error\": \"Internal server error\"}\n\n")
 }
 
 func responseFor(ctx *fasthttp.RequestCtx, response *message.Response) {

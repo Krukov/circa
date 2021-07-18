@@ -123,7 +123,7 @@ func (r *Runner) Handle(request *message.Request) (resp *message.Response, err e
 		request.Params = params
 		request.Route = string(rule)
 		for _, handler_ := range handlers_ {
-			makeRequest = handler_.ToCall(makeRequest, string(rule))
+			makeRequest = handler_.ToCall(makeRequest, request.Route)
 		}
 	}
 	resp, err = makeRequest(request)

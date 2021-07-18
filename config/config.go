@@ -5,7 +5,6 @@ import (
 	"circa/message"
 	"circa/rules"
 	"circa/storages"
-	"errors"
 	"io/ioutil"
 	"time"
 )
@@ -46,11 +45,7 @@ func AdjustJsonConfig(r *handler.Runner, path string) error {
 			}
 			storage, ok = storagesMap[ruleOptions.Storage]
 			if !ok {
-				if len(storagesMap) == 1 {
-					storage = defaultStorage
-				} else {
-					return errors.New("unknown storage")
-				}
+				storage = defaultStorage
 			}
 			r.AddHandlers(rulePath, handler.NewHandler(rule, storage, temp, defRequest, ruleOptions.Methods))
 		}
@@ -64,6 +59,8 @@ func getRuleFromOptions(rule Rule) (rules.Rule, error) {
 	switch rule.Type {
 	case "proxy":
 		return convertToProxyRule(rule)
+	case "retry":
+		return convertToRetryRule(rule)
 	case "fail":
 		return convertToFailRule(rule)
 	case "simple":
@@ -73,6 +70,10 @@ func getRuleFromOptions(rule Rule) (rules.Rule, error) {
 
 func convertToProxyRule(rule Rule) (*rules.ProxyRule, error) {
 	return &rules.ProxyRule{}, nil
+}
+
+func convertToRetryRule(rule Rule) (*rules.RetryRule, error) {
+	return &rules.RetryRule{Count: rule.Count}, nil
 }
 
 func convertToCacheRule(rule Rule) (*rules.CacheRule, error) {

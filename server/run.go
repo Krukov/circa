@@ -45,7 +45,7 @@ func Run(cancel context.CancelFunc, h *handler.Runner, port string) *fasthttp.Se
 
 	// Start HTTP server.
 	log.Info().Str("port", port).Msg("Start server")
-	srv := fasthttp.Server{Handler: requestHandler}
+	srv := fasthttp.Server{Handler: requestHandler, Name: "circa", ReadTimeout: time.Second * 10}
 	go func() {
 		defer cancel()
 		if err := srv.ListenAndServe(fmt.Sprintf(":%s", port)); err != nil {

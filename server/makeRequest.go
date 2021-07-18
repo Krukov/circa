@@ -8,9 +8,11 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-var httpClient = fasthttp.Client{ReadTimeout: time.Second * 5}
+var headersForbiddenToProxy = map[string]bool{"Connection": true, "Content-Length": true, "Keep-Alive": true}
+var headersForbiddenToPass = map[string]bool{"Accept-Encoding": true, "Connection": true}
 
 func MakeRequest(request *message.Request) (*message.Response, error) {
+	httpClient := fasthttp.Client{ReadTimeout: time.Second * 5}
 	start := time.Now()
 	logger := request.Logger.With().
 		Str("host", request.Host).
@@ -30,18 +32,24 @@ func MakeRequest(request *message.Request) (*message.Response, error) {
 	request_.Header.SetMethod(request.Method)
 	request_.SetRequestURI(request.Host + request.Path)
 	for header := range request.Headers {
-		request_.Header.Set(header, request.Headers[header])
+		if !headersForbiddenToPass[header] {
+			request_.Header.Set(header, request.Headers[header])
+		}
 	}
 
 	if err := httpClient.DoTimeout(request_, response_, request.Timeout); err != nil {
 		return nil, err
 	}
 
-	data := response_.Body()
+	data := make([]byte, len(response_.Body()))
+	copy(data, response_.Body())
+
 	logger.Info().Str("status", strconv.Itoa(response_.StatusCode())).Msg("<<- Response from target")
 	headers := map[string]string{}
 	response_.Header.VisitAll(func(key, value []byte) {
-		headers[string(key)] = string(value)
+		if !headersForbiddenToProxy[string(key)] {
+			headers[string(key)] = string(value)
+		}
 	})
 	headers["X-Circa-Requester-Spend"] = strconv.Itoa(int(time.Since(start).Milliseconds()))
 	return &message.Response{Body: data, Status: response_.StatusCode(), Headers: headers}, nil
