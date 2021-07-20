@@ -1,0 +1,38 @@
+ARG BASE_IMAGE=golang:1.16-alpine
+FROM ${BASE_IMAGE} AS deps
+
+WORKDIR /deps
+COPY go.mod go.sum /deps/
+RUN apk --update update && \
+    apk add --no-cache git && \
+    go mod download && go mod verify
+
+
+# BUILD STAGE
+FROM ${BASE_IMAGE} AS build
+RUN apk --update update && \
+    apk add --no-cache git gcc libc-dev
+
+COPY --from=deps ${GOPATH}/pkg/mod ${GOPATH}/pkg/mod
+COPY --from=deps /usr/local/go/pkg /usr/local/go/pkg
+WORKDIR /app
+COPY . /app
+
+ENV CGO_ENABLED=0 GOOS=linux GO111MODULE=on GOARCH=amd64
+
+RUN go build -x -o /build/app -mod readonly -ldflags="-w -s -X main.Version=0.1 -X main.Build=1"
+
+# FINAL STAGE
+FROM alpine
+
+RUN addgroup --gid 5655 -S usergroup && \
+	adduser --uid 5655 -Ss /bin/bash -h /user -G usergroup user && \
+	chown -R user:usergroup /user
+
+COPY --from=build /build /bin/
+COPY ./example/circa.json /tmp/config.json
+
+USER user
+
+EXPOSE 8000
+ENTRYPOINT [ "/bin/app", "--config", "/tmp/config.json", "--debug", "--port", "9000"]

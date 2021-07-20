@@ -1,12 +1,15 @@
 package config
 
 import (
+	"io/ioutil"
+	"time"
+
 	"circa/handler"
 	"circa/message"
 	"circa/rules"
 	"circa/storages"
-	"io/ioutil"
-	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 func AdjustJsonConfig(r *handler.Runner, path string) error {
@@ -26,6 +29,7 @@ func AdjustJsonConfig(r *handler.Runner, path string) error {
 		if err != nil {
 			return err
 		}
+		log.Info().Msgf("Configured storage %v with dns %v", name, DSN)
 		defaultStorage = storagesMap[name]
 	}
 

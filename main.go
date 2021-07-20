@@ -23,7 +23,7 @@ func main() {
 	jsonLogs := flag.Bool("json-out", false, "json logging")
 	configFilePath := flag.String("config", "./config.json", "Config path")
 	port := flag.String("port", "8000", "Listen port")
-	managePort := flag.String("manage-port", "9000", "Listen port")
+	managePort := flag.String("manage-port", "9991", "Listen port")
 	flag.Parse()
 
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)

@@ -1,0 +1,22 @@
+{
+  "storages": {
+    "r": "redis://localhost/0?timeout=1&pool_size=2"
+  },
+  "rules": {
+    "/posts/{id}": [
+      {
+        "key": "posts-{id}:key",
+        "ttl": "1m"
+      },
+      {
+        "methods": ["POST", "DELETE", "PUT", "PATCH"],
+        "type": "invalidation",
+        "key": "posts-{id}:key"
+      }
+    ]
+  },
+  "options": {
+    "host": "http://localhost:8888",
+    "timeout": "1m30s"
+  }
+}
