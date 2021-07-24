@@ -16,13 +16,11 @@ func (r *RetryRule) String() string {
 }
 
 func (r *RetryRule) Process(request *message.Request, key string, storage storages.Storage, call message.Requester) (*message.Response, bool, error) {
-	resp, err := call(request)
+	resp, hit, err := simpleCall(request, call)
 	retry := 0
-	hit := false
 	for retry < r.Count && err != nil {
 		request.Logger.Info().Msgf("== Retrying request %v, err %v", retry, err)
 		retry += 1
-
 		hit = true
 		resp, err = call(request)
 	}

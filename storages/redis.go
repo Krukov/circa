@@ -2,7 +2,9 @@ package storages
 
 import (
 	"context"
+	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -11,8 +13,44 @@ import (
 )
 
 type Redis struct {
-	client  *redis.Client
-	timeout time.Duration
+	client *redis.Client
+}
+
+func NewRedisStorageFormURL(sURL *url.URL) (*Redis, error) {
+	p, _ := sURL.User.Password()
+	DB, err := strconv.Atoi(sURL.Path[1:])
+	if err != nil {
+		return nil, err
+	}
+	host := sURL.Host
+	if !strings.Contains(host, ":") {
+		host += ":6379"
+	}
+	var poolSize int
+	if _, ok := sURL.Query()["pool_size"]; ok {
+		poolSize, err = strconv.Atoi(sURL.Query()["pool_size"][0])
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	timeout := "30ms"
+	if _, ok := sURL.Query()["timeout"]; ok {
+		timeout = sURL.Query()["timeout"][0]
+	}
+	readTimeout, err := time.ParseDuration(timeout)
+	if err != nil {
+		return nil, err
+	}
+	rdb := redis.NewClient(&redis.Options{
+		Addr:        host,
+		Password:    p,  // no password set
+		DB:          DB, // use default DB
+		PoolSize:    poolSize,
+		ReadTimeout: readTimeout,
+	})
+
+	return &Redis{client: rdb}, err
 }
 
 func (s *Redis) String() string {
@@ -20,10 +58,9 @@ func (s *Redis) String() string {
 }
 
 func (s *Redis) Set(key string, value *message.Response, ttl time.Duration) (bool, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
+	ctx := context.Background()
 	start := time.Now()
 	defer func() {
-		cancel()
 		operationHistogram.WithLabelValues(s.String(), "set").Observe(time.Since(start).Seconds())
 	}()
 	values := map[string]string{}
@@ -44,10 +81,9 @@ func (s *Redis) Set(key string, value *message.Response, ttl time.Duration) (boo
 }
 
 func (s *Redis) Del(key string) (bool, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
+	ctx := context.Background()
 	start := time.Now()
 	defer func() {
-		cancel()
 		operationHistogram.WithLabelValues(s.String(), "del").Observe(time.Since(start).Seconds())
 	}()
 	deleted, err := s.client.Del(ctx, "key").Result()
@@ -59,9 +95,8 @@ func (s *Redis) Del(key string) (bool, error) {
 
 func (s *Redis) Get(key string) (*message.Response, error) {
 	start := time.Now()
-	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
+	ctx := context.Background()
 	defer func() {
-		cancel()
 		operationHistogram.WithLabelValues(s.String(), "get").Observe(time.Since(start).Seconds())
 	}()
 	keys, err := s.client.HGetAll(ctx, key).Result()
@@ -82,4 +117,13 @@ func (s *Redis) Get(key string) (*message.Response, error) {
 		return nil, NotFound
 	}
 	return &message.Response{Status: statusInt, Body: []byte(body), Headers: keys}, nil
+}
+
+func (s *Redis) Incr(key string) (int, error) {
+	start := time.Now()
+	defer func() {
+		operationHistogram.WithLabelValues(s.String(), "incr").Observe(time.Since(start).Seconds())
+	}()
+	count, err := s.client.Incr(context.Background(), key).Result()
+	return int(count), err
 }

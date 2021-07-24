@@ -29,7 +29,7 @@ func AdjustJsonConfig(r *handler.Runner, path string) error {
 		if err != nil {
 			return err
 		}
-		log.Info().Msgf("Configured storage %v with dns %v", name, DSN)
+		log.Info().Msgf("Configured storage '%v' with dns '%v'", name, DSN)
 		defaultStorage = storagesMap[name]
 	}
 
@@ -65,8 +65,12 @@ func getRuleFromOptions(rule Rule) (rules.Rule, error) {
 		return convertToProxyRule(rule)
 	case "retry":
 		return convertToRetryRule(rule)
+	case "request_id":
+		return convertToRequestIDRule(rule)
 	case "fail":
 		return convertToFailRule(rule)
+	case "hit":
+		return convertToHitRule(rule)
 	case "simple":
 	}
 	return convertToCacheRule(rule)
@@ -88,6 +92,15 @@ func convertToCacheRule(rule Rule) (*rules.CacheRule, error) {
 func convertToFailRule(rule Rule) (*rules.FailRule, error) {
 	ttl, err := timeFromString(rule.TTL)
 	return &rules.FailRule{TTL: ttl}, err
+}
+
+func convertToRequestIDRule(rule Rule) (*rules.RequestIDRule, error) {
+	return &rules.RequestIDRule{HeaderName: rule.RequestIDHeaderName}, nil
+}
+
+func convertToHitRule(rule Rule) (*rules.HitRule, error) {
+	ttl, err := timeFromString(rule.TTL)
+	return &rules.HitRule{TTL: ttl, Hits: rule.Hits, UpdateAfterHits: rule.UpdateAfterHits}, err
 }
 
 func timeFromString(in string) (time.Duration, error) {

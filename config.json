@@ -1,6 +1,6 @@
 {
   "storages": {
-    "r": "redis://localhost/0?timeout=1&pool_size=2"
+    "r": "redis://localhost/0?timeout=1s&pool_size=2"
   },
   "rules": {
     "/posts/{id}": {

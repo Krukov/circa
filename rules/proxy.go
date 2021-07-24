@@ -14,7 +14,8 @@ func (r *ProxyRule) String() string {
 }
 
 func (r *ProxyRule) Process(request *message.Request, key string, storage storages.Storage, call message.Requester) (*message.Response, bool, error) {
-	request.Host = r.Target
-	resp, err := call(request)
-	return resp, true, err
+	if r.Target != "" {
+		request.Host = r.Target
+	}
+	return simpleCall(request, call)
 }

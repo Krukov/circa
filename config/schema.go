@@ -18,7 +18,12 @@ type Rule struct {
 	EarlyTTL     string `json:"early_ttl"`
 	CacheControl string `json:"cache_control"`
 
-	Count int `json:"count"`
+	Count            int `json:"count"`
+
+	Hits int `json:"hits"`
+	UpdateAfterHits int `json:"update_after"`
+
+	RequestIDHeaderName string `json:"id_header"`
 }
 
 type config struct {

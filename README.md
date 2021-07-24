@@ -78,12 +78,6 @@ roadmap
 2) config load from file [*]
 2.1) logging + flag [*]
 3) Add redis backend [*]
-4) add 
-   4.1) fail [*] 
-   4.2) circuit-breaker [-]
-   4.3) hit cache [-]
-   4.4) worm cache [-]
-   4.5) retry [*]
    
 5.0) Metrics and monitoring [done]
    - Storage metrics [redis]
@@ -93,7 +87,8 @@ roadmap
     
 Performance tests
 
-5.1) k8 integration (sidecar? Ingress)
+5.1) k8 integration (sidecar? Ingress?) [*]
+*) Headers in key templates
 5) Manage config with http api
 6) Manage config with backend 
 7) Proxy headers  - Fix gzip error 
@@ -104,16 +99,16 @@ x) Do TODOs
 
 Backends : memory, redis (client-side too), embended golang kv store
 types: 
-    - simple
+    - simple +
     - early 
-    - hit
-    - fail 
+    - hit +
+    - fail +
     - rate-limit 
     - circuit-breaker
     - hot ? ( keep cache warm and regularly make requests)
-    - retry
-    - proxy-for metrics
-    - check header consistency ( request-id )
+    - retry +
+    - proxy-for metrics +
+    - check header consistency ( request-id ) + 
     - idempotent key
     - concatenate
 
