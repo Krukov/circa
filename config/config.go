@@ -67,6 +67,8 @@ func getRuleFromOptions(rule Rule) (rules.Rule, error) {
 		return convertToRetryRule(rule)
 	case "request_id":
 		return convertToRequestIDRule(rule)
+	case "rete-limit":
+		return convertToRateLimitRule(rule)
 	case "fail":
 		return convertToFailRule(rule)
 	case "hit":
@@ -78,6 +80,11 @@ func getRuleFromOptions(rule Rule) (rules.Rule, error) {
 
 func convertToProxyRule(rule Rule) (*rules.ProxyRule, error) {
 	return &rules.ProxyRule{}, nil
+}
+
+func convertToRateLimitRule(rule Rule) (*rules.RateLimitRule, error) {
+	ttl, err := timeFromString(rule.TTL)
+	return &rules.RateLimitRule{TTL: ttl, Limit: rule.Hits}, err
 }
 
 func convertToRetryRule(rule Rule) (*rules.RetryRule, error) {

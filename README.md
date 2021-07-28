@@ -103,7 +103,8 @@ types:
     - early 
     - hit +
     - fail +
-    - rate-limit 
+    - rate-limit +
+    - rate-limit with a bucket
     - circuit-breaker
     - hot ? ( keep cache warm and regularly make requests)
     - retry +
