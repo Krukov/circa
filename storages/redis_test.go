@@ -16,7 +16,7 @@ func TestRedisStoreSetAndGet(t *testing.T) {
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	})
-	s := Redis{client: rdb, timeout: time.Second}
+	s := Redis{client: rdb}
 	ctx := context.Background()
 	defer rdb.Del(ctx, "key").Err()
 

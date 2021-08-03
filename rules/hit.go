@@ -24,17 +24,16 @@ func (r *HitRule) Process(request *message.Request, key string, storage storages
 	}
 	if hits == 1 {
 		// No cache record - call and save result with ttl
+		_ = storage.Expire(key + ":hits", r.TTL)
 		return callAndSet(request, key, storage, call, r.TTL)
 	}
 
 	if hits > r.Hits {
-		_, _ = storage.Del(key + ":hits")
-		return callAndSet(request, key, storage, call, r.TTL)
+		return updateCache(request, key, storage, call, r.TTL)
 	} else {
-		if hits > r.UpdateAfterHits {
+		if hits == r.UpdateAfterHits {
 			go func() {
-				_, _ = storage.Del(key + ":hits")
-				callAndSet(request, key, storage, call, r.TTL)
+				updateCache(request, key, storage, call, r.TTL)
 			}()
 		}
 		resp, err = storage.Get(key)
@@ -43,6 +42,11 @@ func (r *HitRule) Process(request *message.Request, key string, storage storages
 		}
 	}
 	return simpleCall(request, call)
+}
+
+func updateCache(request *message.Request, key string, storage storages.Storage, call message.Requester, ttl time.Duration) (*message.Response, bool, error) {
+	_, _ = storage.Del(key + ":hits")
+	return callAndSet(request, key, storage, call, ttl)
 }
 
 func callAndSet(request *message.Request, key string, storage storages.Storage, call message.Requester, ttl time.Duration) (*message.Response, bool, error) {

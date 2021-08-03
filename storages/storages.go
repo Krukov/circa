@@ -16,10 +16,12 @@ type Options struct {
 type Storage interface {
 	String() string
 
-	Set(key string, value *message.Response, ttl time.Duration) (bool, error)
-	Del(key string) (bool, error)
-	Incr(key string) (int, error)
 	Get(key string) (*message.Response, error)
+	Set(key string, value *message.Response, ttl time.Duration) (bool, error)
+	Incr(key string) (int, error)
+	Del(key string) (bool, error)
+
+	Expire(key string, ttl time.Duration) error
 }
 
 var NotFound = errors.New("key not found")

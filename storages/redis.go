@@ -127,3 +127,12 @@ func (s *Redis) Incr(key string) (int, error) {
 	count, err := s.client.Incr(context.Background(), key).Result()
 	return int(count), err
 }
+
+func (s *Redis) Expire(key string, ttl time.Duration) error {
+	start := time.Now()
+	defer func() {
+		operationHistogram.WithLabelValues(s.String(), "expire").Observe(time.Since(start).Seconds())
+	}()
+	_, err := s.client.Expire(context.Background(), key, ttl).Result()
+	return err
+}

@@ -66,3 +66,9 @@ func (s *Memory) Incr(key string) (int, error) {
 	s.intStorage[key] = s.intStorage[key] + 1
 	return s.intStorage[key], nil
 }
+
+func (s *Memory) Expire(key string, ttl time.Duration) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	return nil
+}
