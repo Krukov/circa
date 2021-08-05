@@ -40,7 +40,7 @@ Configuration look like
       }
     },
     "books": {
-      "books:{authtorization|jwt(user_uid)}{cache_version}": {
+      "books:{H:authtorization|jwt:user_id}{cache_version}": {
         "ttl": "2d",
         "early_ttl": "1d"
       }
@@ -88,14 +88,13 @@ roadmap
 Performance tests
 
 5.1) k8 integration (sidecar? Ingress?) [*]
-*) Headers in key templates
+*) Headers in key templates [*]
 5) Manage config with http api
 6) Manage config with backend 
 7) Proxy headers  - Fix gzip error 
 
 9) Rules for all - global rules for example fail for all  [*]
-10) Lru in mem storage 
-x) Do TODOs
+10) REDO mem storage
 
 Backends : memory, redis (client-side too), embended golang kv store
 types: 
@@ -109,6 +108,7 @@ types:
     - hot ? ( keep cache warm and regularly make requests)
     - retry +
     - proxy-for metrics +
+    - invalidate + 
     - check header consistency ( request-id ) + 
     - idempotent key
     - concatenate

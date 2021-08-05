@@ -8,6 +8,7 @@ type GlobalOptions struct {
 }
 
 type Rule struct {
+	Key  string `json:"key"`
 	Type string `json:"type"`
 
 	Timeout string   `json:"timeout"`
@@ -29,7 +30,7 @@ type Rule struct {
 type config struct {
 	Version  string                     `json:"version"`
 	Storages map[string]string          `json:"storages"`
-	Rules    map[string]map[string]Rule `json:"rules"`
+	Rules    map[string][]Rule          `json:"rules"`
 	Options  GlobalOptions              `json:"options"`
 }
 

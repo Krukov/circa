@@ -1,6 +1,8 @@
 package handler
 
 import (
+	b64 "encoding/base64"
+	"encoding/json"
 	"strings"
 )
 
@@ -21,7 +23,7 @@ func formatTemplate(template string, params map[string]string) string {
 		}
 		if char == END_RUNE {
 			varDetect = false
-			result += params[variableName]
+			result += extractExpressionFromParams(variableName, params)
 			variableName = ""
 			continue
 		}
@@ -32,4 +34,50 @@ func formatTemplate(template string, params map[string]string) string {
 		}
 	}
 	return result
+}
+
+func jwt(s, name string) string {
+	splited := strings.Split(s, ".")
+	if len(splited) != 3 {
+		return ""
+	}
+	body := splited[1]
+	bodyB, err := b64.StdEncoding.DecodeString(body)
+	if err != nil {
+		return ""
+	}
+	claims := map[string]string{}
+	json.Unmarshal(bodyB, &claims)
+	return claims[name]
+}
+
+
+var functions = map[string]func(s string) string{
+	"lower": strings.ToLower,
+	"upper": strings.ToUpper,
+	"title": strings.ToTitle,
+	"trim": strings.TrimSpace,
+}
+var functionsParam = map[string]func(s, param string) string{
+	"jwt": jwt,
+	"trim": func(s, param string) string {return strings.Trim(s, param)},
+	"replace": func(s, param string) string {return strings.Replace(s, param, "", -1)},
+}
+
+
+func extractExpressionFromParams(expression string, params map[string]string) string {
+	exp := strings.SplitN(expression, "|", 2)
+	val := params[exp[0]]
+	if len(exp) > 1 {
+		fNameS := strings.SplitN(exp[1], ":", 2)
+		if len(fNameS) > 1 {
+			if f, ok := functionsParam[fNameS[0]]; ok {
+				return f(val, fNameS[1])
+			}
+		}
+		if f, ok := functions[exp[1]]; ok {
+			return f(val)
+		}
+	}
+	return val
 }

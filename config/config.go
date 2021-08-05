@@ -42,7 +42,7 @@ func AdjustJsonConfig(r *handler.Runner, path string) error {
 	var ok bool
 	var storage storages.Storage
 	for rulePath, rule_ := range c.Rules {
-		for temp, ruleOptions := range rule_ {
+		for _, ruleOptions := range rule_ {
 			rule, err = getRuleFromOptions(ruleOptions)
 			if err != nil {
 				return err
@@ -51,7 +51,7 @@ func AdjustJsonConfig(r *handler.Runner, path string) error {
 			if !ok {
 				storage = defaultStorage
 			}
-			r.AddHandlers(rulePath, handler.NewHandler(rule, storage, temp, defRequest, ruleOptions.Methods))
+			r.AddHandlers(rulePath, handler.NewHandler(rule, storage, ruleOptions.Key, defRequest, ruleOptions.Methods))
 		}
 	}
 	r.SetProxy(c.Options.Target, timeout)
@@ -73,6 +73,8 @@ func getRuleFromOptions(rule Rule) (rules.Rule, error) {
 		return convertToFailRule(rule)
 	case "hit":
 		return convertToHitRule(rule)
+	case "invalidate":
+		return convertToInvalidateRule(rule)
 	case "simple":
 	}
 	return convertToCacheRule(rule)
@@ -91,6 +93,14 @@ func convertToRetryRule(rule Rule) (*rules.RetryRule, error) {
 	return &rules.RetryRule{Count: rule.Count}, nil
 }
 
+func convertToInvalidateRule(rule Rule) (*rules.InvalidateRule, error) {
+	methods := map[string]bool{}
+	for _, method := range rule.Methods {
+		methods[method] = true
+	}
+	return &rules.InvalidateRule{Methods: methods}, nil
+}
+
 func convertToCacheRule(rule Rule) (*rules.CacheRule, error) {
 	ttl, err := timeFromString(rule.TTL)
 	return &rules.CacheRule{TTL: ttl}, err
@@ -102,7 +112,11 @@ func convertToFailRule(rule Rule) (*rules.FailRule, error) {
 }
 
 func convertToRequestIDRule(rule Rule) (*rules.RequestIDRule, error) {
-	return &rules.RequestIDRule{HeaderName: rule.RequestIDHeaderName}, nil
+	header := rule.RequestIDHeaderName
+	if header == "" {
+		header = "X-Request-ID"
+	}
+	return &rules.RequestIDRule{HeaderName: header}, nil
 }
 
 func convertToHitRule(rule Rule) (*rules.HitRule, error) {

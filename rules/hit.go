@@ -24,7 +24,7 @@ func (r *HitRule) Process(request *message.Request, key string, storage storages
 	}
 	if hits == 1 {
 		// No cache record - call and save result with ttl
-		_ = storage.Expire(key + ":hits", r.TTL)
+		storage.Expire(key + ":hits", r.TTL)
 		return callAndSet(request, key, storage, call, r.TTL)
 	}
 
@@ -54,9 +54,6 @@ func callAndSet(request *message.Request, key string, storage storages.Storage, 
 	if err != nil {
 		return nil, false, err
 	}
-	_, setErr := storage.Set(key, resp, ttl)
-	if setErr != nil {
-		request.Logger.Warn().Msgf("error on set value %v", setErr)
-	}
+	storage.Set(key, resp, ttl)
 	return resp, false, err
 }

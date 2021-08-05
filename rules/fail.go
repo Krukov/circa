@@ -26,17 +26,10 @@ func (r *FailRule) Process(request *message.Request, key string, storage storage
 			hit = true
 			err = nil
 			return
-		} else {
-			if errStorage != storages.NotFound {
-				request.Logger.Warn().Msgf("error on get value %v", err)
-			}
 		}
 	}
 	if resp != nil && resp.CachedKey == "" {
-		_, setErr := storage.Set(key, resp, r.TTL)
-		if setErr != nil {
-			request.Logger.Warn().Msgf("error on set value %v", setErr)
-		}
+		storage.Set(key, resp, r.TTL)
 	}
 	return
 }

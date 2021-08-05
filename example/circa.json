@@ -3,22 +3,25 @@
     "r": "redis://redis.default.svc.cluster.local/0"
   },
   "rules": {
-    "/": {
-      "random:key": {
+    "/": [
+      {
+        "key": "random:key",
         "ttl": "1m"
       }
-    },
-    "/me": {
-      "me:key": {
+    ],
+    "/me": [
+      {
+        "key": "me:key",
         "ttl": "1m"
       }
-    },
-    "/*": {
-      "{request_path}:fail": {
+    ],
+    "/*": [
+      {
+        "key": "{request_path}:fail",
         "ttl": "1m",
         "type": "fail"
       }
-    }
+    ]
   },
   "options": {
     "host": "http://localhost:8000",

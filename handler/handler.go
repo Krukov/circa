@@ -70,8 +70,16 @@ func (h *handler) Run(request *message.Request, call message.Requester) (*messag
 }
 
 func (h *handler) makeKey(request *message.Request) string {
-	request.Params["request_path"] = request.Path
-	return formatTemplate(h.keyTemplate, request.Params)
+	params := map[string]string{}
+	for k, v := range request.Params {
+		params[k] = v
+	}
+	for hk, hv := range request.Headers {
+		params["H:" + strings.ToLower(hk)] = hv
+	}
+	params["request_path"] = request.Path
+	params["request_method"] = request.Method
+	return formatTemplate(h.keyTemplate, params)
 }
 
 type Runner struct {
