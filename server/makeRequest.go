@@ -52,5 +52,5 @@ func MakeRequest(request *message.Request) (*message.Response, error) {
 		}
 	})
 	headers["X-Circa-Requester-Spend"] = strconv.Itoa(int(time.Since(start).Milliseconds()))
-	return &message.Response{Body: data, Status: response_.StatusCode(), Headers: headers}, nil
+	return message.NewResponse(response_.StatusCode(), data, headers), nil
 }

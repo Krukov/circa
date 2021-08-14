@@ -7,7 +7,7 @@ import (
 )
 
 type RateLimitRule struct {
-	TTL time.Duration
+	TTL   time.Duration
 	Limit int
 }
 
@@ -21,7 +21,11 @@ func (r *RateLimitRule) Process(request *message.Request, key string, storage st
 		storage.Expire(key, r.TTL)
 	}
 	if count >= r.Limit {
-		return &message.Response{Status: 429, Body: []byte(`{"message":"rate limit"}`)}, true, nil
+		request.Skip = true
+		headers := map[string]string{
+			"X-Circa-Rate-Key": key,
+		}
+		return message.NewResponse(429, []byte(`{"message":"rate limit"}`), headers), true, nil
 	}
 	return simpleCall(request, call)
 }

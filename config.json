@@ -1,13 +1,9 @@
 {
   "storages": {
-    "r": "redis://localhost/0?timeout=1s&pool_size=2"
+    "m": "mem://?size=5"
   },
   "rules": {
     "/posts/{id}": [
-      {
-        "key": "posts-{id}:key",
-        "ttl": "1m"
-      },
       {
         "type": "rate-limit",
         "key": "post:rate-limit",
@@ -22,22 +18,42 @@
         "hits": 10
       },
       {
+        "type": "idempotency",
+        "key": "post-ide-{R:body|hash}",
+        "ttl": "10s",
+        "methods": ["POST"]
+      },
+      {
+        "key": "posts-{id}:key",
+        "ttl": "10m"
+      },
+      {
         "methods": ["POST", "DELETE", "PUT", "PATCH"],
-        "type": "invalidation",
+        "type": "invalidate",
         "key": "posts-{id}:key"
       }
     ],
     "/*": [
       {
-        "key": "{request_path}:fail",
+        "type": "rate-limit",
+        "key": "rl:{R:path}",
         "ttl": "1m",
-        "type": "fail"
+        "block": "5m",
+        "hits": 300
       },
       {
-        "type": "request_id"
+        "type": "fail",
+        "key": "f:{R:path}",
+        "ttl": "24h"
+      },
+      {
+        "type": "request_id",
+        "methods": ["GET", "POST", "DELETE", "PUT", "PATCH"],
+        "skip_return": true
       },
       {
         "type": "retry",
+        "methods": ["GET", "PATCH"],
         "backoff": "1s",
         "count": 2
       }

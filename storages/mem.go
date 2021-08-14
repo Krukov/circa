@@ -1,22 +1,30 @@
 package storages
 
 import (
-	"circa/message"
-	"errors"
 	"net/url"
-	"sync"
+	"strconv"
 	"time"
+
+	"github.com/bluele/gcache"
+
+	"circa/message"
 )
 
 type Memory struct {
-	storage    map[string]*message.Response
-	intStorage map[string]int
-	maxSize    int
-	lock       *sync.Mutex
+	gc gcache.Cache
 }
 
 func NewMemStorageFromURL(sURL *url.URL) (*Memory, error) {
-	return &Memory{map[string]*message.Response{}, map[string]int{}, 100, &sync.Mutex{}}, nil
+	size := 10000
+	var err error
+	if _, ok := sURL.Query()["size"]; ok {
+		size, err = strconv.Atoi(sURL.Query()["size"][0])
+		if err != nil {
+			return nil, err
+		}
+	}
+	gc := gcache.New(size).LRU().Build()
+	return &Memory{gc: gc}, nil
 }
 
 func (s *Memory) String() string {
@@ -24,51 +32,38 @@ func (s *Memory) String() string {
 }
 
 func (s *Memory) Set(key string, value *message.Response, ttl time.Duration) (bool, error) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-	_, ok := s.storage[key]
-	if !ok && len(s.storage) > s.maxSize {
-		return false, errors.New("overflow")
-	}
-	s.storage[key] = value
-	return ok, nil
+	exists := s.gc.Has(key)
+	err := s.gc.SetWithExpire(key, value, ttl)
+	return !exists, err
 }
 
 func (s *Memory) Del(key string) (bool, error) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-	_, ok := s.storage[key]
-	if !ok {
-		_, ok = s.intStorage[key]
-		if !ok {
-			return false, NotFound
-		}
-		delete(s.intStorage, key)
-	}
-	delete(s.storage, key)
-
-	return true, nil
+	return s.gc.Remove(key), nil
 }
 
 func (s *Memory) Get(key string) (*message.Response, error) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-	value, ok := s.storage[key]
-	if !ok {
+	resp, err := s.gc.Get(key)
+	if err != nil {
 		return nil, NotFound
 	}
-	return value, nil
+	return resp.(*message.Response), err
 }
 
 func (s *Memory) Incr(key string) (int, error) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-	s.intStorage[key] = s.intStorage[key] + 1
-	return s.intStorage[key], nil
+	countInt := 0
+	count, err := s.gc.Get(key)
+	if err == nil {
+		countInt = count.(int)
+	}
+	s.gc.Set(key, countInt)
+	return countInt + 1, nil
 }
 
 func (s *Memory) Expire(key string, ttl time.Duration) error {
-	s.lock.Lock()
-	defer s.lock.Unlock()
+	value, err := s.gc.Get(key)
+	if err != nil {
+		return NotFound
+	}
+	s.gc.SetWithExpire(key, value, ttl)
 	return nil
 }

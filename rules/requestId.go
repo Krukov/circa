@@ -30,5 +30,6 @@ func (r *RequestIDRule) Process(request *message.Request, key string, storage st
 	if !r.SkipCheckReturn && requestID != resp.Headers[r.HeaderName] {
 		request.Logger.Warn().Msgf("Request id of response doesn't match request value %v != %v", resp.Headers[r.HeaderName], requestID)
 	}
+	resp.Headers[r.HeaderName] = requestID
 	return resp, hit, err
 }

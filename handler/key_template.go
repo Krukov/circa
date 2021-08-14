@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"crypto/md5"
 	b64 "encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"strings"
 )
@@ -51,19 +53,23 @@ func jwt(s, name string) string {
 	return claims[name]
 }
 
+func hash(s string) string {
+	md5Hash := md5.Sum([]byte(s))
+	return hex.EncodeToString(md5Hash[:])
+}
 
 var functions = map[string]func(s string) string{
 	"lower": strings.ToLower,
 	"upper": strings.ToUpper,
 	"title": strings.ToTitle,
-	"trim": strings.TrimSpace,
+	"trim":  strings.TrimSpace,
+	"hash":  hash,
 }
 var functionsParam = map[string]func(s, param string) string{
-	"jwt": jwt,
-	"trim": func(s, param string) string {return strings.Trim(s, param)},
-	"replace": func(s, param string) string {return strings.Replace(s, param, "", -1)},
+	"jwt":     jwt,
+	"trim":    func(s, param string) string { return strings.Trim(s, param) },
+	"replace": func(s, param string) string { return strings.Replace(s, param, "", -1) },
 }
-
 
 func extractExpressionFromParams(expression string, params map[string]string) string {
 	exp := strings.SplitN(expression, "|", 2)

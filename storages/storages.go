@@ -1,11 +1,12 @@
 package storages
 
 import (
-	"circa/message"
 	"errors"
 	"fmt"
 	"net/url"
 	"time"
+
+	"circa/message"
 )
 
 type Options struct {

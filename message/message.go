@@ -15,6 +15,11 @@ type Response struct {
 	CachedKey string
 }
 
+func NewResponse(status int, body []byte, headers map[string]string) *Response {
+	headers["Content-Type"] = "application/json; charset=utf8"
+	return &Response{Status: status, Body: body, Headers: headers}
+}
+
 type Request struct {
 	Method  string
 	Path    string
@@ -28,6 +33,7 @@ type Request struct {
 	//ProxyHeaders map[string]string
 
 	Timeout time.Duration
+	Skip    bool
 
 	Logger zerolog.Logger
 }

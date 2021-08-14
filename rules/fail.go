@@ -28,7 +28,7 @@ func (r *FailRule) Process(request *message.Request, key string, storage storage
 			return
 		}
 	}
-	if resp != nil && resp.CachedKey == "" {
+	if resp != nil && resp.CachedKey == "" && !request.Skip {
 		storage.Set(key, resp, r.TTL)
 	}
 	return

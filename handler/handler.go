@@ -1,12 +1,13 @@
 package handler
 
 import (
-	"circa/message"
-	"circa/rules"
-	"circa/storages"
 	"strconv"
 	"strings"
 	"time"
+
+	"circa/message"
+	"circa/rules"
+	"circa/storages"
 )
 
 var ALL_METHODS = map[string]bool{"get": true, "post": true, "head": true, "put": true, "patch": true, "options": true}
@@ -40,13 +41,20 @@ func NewHandler(rule rules.Rule, storage storages.Storage, keyTemplate string, d
 }
 
 func (h *handler) ToCall(call message.Requester, route string) message.Requester {
-	return func(request *message.Request) (*message.Response, error) {
-		resp, hit, err := h.Run(request, call)
-		status := "pass"
-		if err != nil {
-			status = "error"
-		} else if hit {
-			status = "hit"
+	return func(request *message.Request) (resp *message.Response, err error) {
+		var hit bool
+		var status string
+		if request.Skip {
+			resp, err = call(request)
+			status = "skip"
+		} else {
+			resp, hit, err = h.Run(request, call)
+			status = "pass"
+			if err != nil {
+				status = "error"
+			} else if hit {
+				status = "hit"
+			}
 		}
 		routeHandlerCount.WithLabelValues(h.rule.String(), route, h.keyTemplate, status).Inc()
 		return resp, err
@@ -54,10 +62,6 @@ func (h *handler) ToCall(call message.Requester, route string) message.Requester
 }
 
 func (h *handler) Run(request *message.Request, call message.Requester) (*message.Response, bool, error) {
-	if _, ok := h.methods[strings.ToLower(request.Method)]; !ok {
-		resp, err := call(request)
-		return resp, false, err
-	}
 	request = mergeRequests(request, h.defaultRequest)
 	key := h.makeKey(request)
 	logger := request.Logger.With().
@@ -75,10 +79,11 @@ func (h *handler) makeKey(request *message.Request) string {
 		params[k] = v
 	}
 	for hk, hv := range request.Headers {
-		params["H:" + strings.ToLower(hk)] = hv
+		params["H:"+strings.ToLower(hk)] = hv
 	}
-	params["request_path"] = request.Path
-	params["request_method"] = request.Method
+	params["R:path"] = request.Path
+	params["R:method"] = request.Method
+	params["R:body"] = string(request.Body)
 	return formatTemplate(h.keyTemplate, params)
 }
 
@@ -131,7 +136,10 @@ func (r *Runner) Handle(request *message.Request) (resp *message.Response, err e
 		request.Params = params
 		request.Route = string(rule)
 		for _, handler_ := range handlers_ {
-			makeRequest = handler_.ToCall(makeRequest, request.Route)
+			if _, ok := handler_.methods[strings.ToLower(request.Method)]; ok {
+				request.Logger.Debug().Msgf("%s Add handler %v", rule, handler_.rule.String())
+				makeRequest = handler_.ToCall(makeRequest, request.Route)
+			}
 		}
 	}
 	resp, err = makeRequest(request)

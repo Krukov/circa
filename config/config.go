@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"io/ioutil"
 	"time"
 
@@ -33,6 +34,7 @@ func AdjustJsonConfig(r *handler.Runner, path string) error {
 		defaultStorage = storagesMap[name]
 	}
 
+	log.Info().Msgf("Default storage is '%v'", defaultStorage.String())
 	timeout, err := timeFromString(c.Options.Timeout)
 	if err != nil {
 		return err
@@ -67,8 +69,10 @@ func getRuleFromOptions(rule Rule) (rules.Rule, error) {
 		return convertToRetryRule(rule)
 	case "request_id":
 		return convertToRequestIDRule(rule)
-	case "rete-limit":
+	case "rate-limit":
 		return convertToRateLimitRule(rule)
+	case "idempotency":
+		return convertToIdempotencyRule(rule)
 	case "fail":
 		return convertToFailRule(rule)
 	case "hit":
@@ -76,17 +80,25 @@ func getRuleFromOptions(rule Rule) (rules.Rule, error) {
 	case "invalidate":
 		return convertToInvalidateRule(rule)
 	case "simple":
+		return convertToCacheRule(rule)
+	case "":
+		return convertToCacheRule(rule)
 	}
-	return convertToCacheRule(rule)
+	return nil, fmt.Errorf("unnown rule type '%s'", rule.Type)
 }
 
 func convertToProxyRule(rule Rule) (*rules.ProxyRule, error) {
-	return &rules.ProxyRule{}, nil
+	return &rules.ProxyRule{Target: rule.Target, Method: rule.Method}, nil
 }
 
 func convertToRateLimitRule(rule Rule) (*rules.RateLimitRule, error) {
 	ttl, err := timeFromString(rule.TTL)
 	return &rules.RateLimitRule{TTL: ttl, Limit: rule.Hits}, err
+}
+
+func convertToIdempotencyRule(rule Rule) (*rules.IdempotencyRule, error) {
+	ttl, err := timeFromString(rule.TTL)
+	return &rules.IdempotencyRule{TTL: ttl}, err
 }
 
 func convertToRetryRule(rule Rule) (*rules.RetryRule, error) {
@@ -116,7 +128,7 @@ func convertToRequestIDRule(rule Rule) (*rules.RequestIDRule, error) {
 	if header == "" {
 		header = "X-Request-ID"
 	}
-	return &rules.RequestIDRule{HeaderName: header}, nil
+	return &rules.RequestIDRule{HeaderName: header, SkipCheckReturn: rule.SkipReturnRequestId}, nil
 }
 
 func convertToHitRule(rule Rule) (*rules.HitRule, error) {

@@ -15,8 +15,8 @@ type node struct {
 	downRules []ruleName
 }
 
-var NotFound = errors.New("no route")
-var DownRuleError = errors.New("down Rule")
+var NotFound = errors.New("noRoute")
+var DownRuleError = errors.New("downRule")
 
 const STAR = "*"
 const PLACEHOLDER = "."
@@ -32,7 +32,15 @@ func (t *node) addRule(rulePath string, rule ruleName) {
 }
 
 func (t *node) setDownRule(rule ruleName) {
-	t.downRules = append(t.downRules, rule)
+	var _in bool
+	for _, downRule := range t.downRules {
+		if rule == downRule {
+			_in = true
+		}
+	}
+	if !_in {
+		t.downRules = append(t.downRules, rule)
+	}
 	for _, c := range t.children {
 		c.setDownRule(rule)
 	}
@@ -61,7 +69,7 @@ func (t *node) addPrefix(prefix string) *node {
 	children, ok := t.children[name]
 	if !ok {
 		children = &node{name: prefix, children: map[string]*node{}, params: []string{}, downRules: []ruleName{}}
-		children.downRules = t.downRules
+		children.downRules = t.downRules[:]
 		t.children[name] = children
 	}
 
@@ -87,6 +95,7 @@ func (t *node) resolve(path string) (names []ruleName, params map[string]string,
 	path = strings.Trim(path, "/")
 	sPath := strings.Split(path, "/")
 	n, params, err = t.getNode(sPath, map[string]string{})
+
 	if n != nil {
 		if err != DownRuleError && n.rule != "" {
 			names = append(names, n.rule)
@@ -137,4 +146,8 @@ func (t *node) getNode(path []string, params map[string]string) (*node, map[stri
 		return t, params, DownRuleError
 	}
 	return nil, params, NotFound
+}
+
+func (t *node) Print() {
+
 }

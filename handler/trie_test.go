@@ -17,6 +17,7 @@ func createRouter() *node {
 	t.addRule("posts/last/{id}", "POSTS_LAST")
 	t.addRule("posts/*", "POSTS_PASS")
 	t.addRule("posts/{id}/*", "POSTS_PASS2")
+	t.addRule("posts/{id}/*", "POSTS_PASS2")
 	t.addRule("posts/{id}", "POSTS_DETAIL")
 	t.addRule("posts/{id}/info", "POSTS_DETAIL_INFO")
 	t.addRule("posts/info/{id}", "POSTS_DETAIL_INFO2")

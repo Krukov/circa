@@ -21,6 +21,7 @@ func Test_formatTemplate(t *testing.T) {
 		{"param-replace", args{"key:{name|replace:t}", map[string]string{"name": "TtT"}}, "key:TT"},
 		{"param-miss", args{"key:{id}:{name}", map[string]string{"name": "test"}}, "key::test"},
 		{"param-jwt", args{"key:{token|jwt:user_id}", map[string]string{"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMiJ9.l-XkseImddERtMT8e3f-XxfPhhQhgplGvX3uPLYy1IQ"}}, "key:2"},
+		{"param-hash", args{"key:{name|hash}", map[string]string{"name": "test"}}, "key:098f6bcd4621d373cade4e832627b4f6"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -24,7 +24,7 @@ func (r *HitRule) Process(request *message.Request, key string, storage storages
 	}
 	if hits == 1 {
 		// No cache record - call and save result with ttl
-		storage.Expire(key + ":hits", r.TTL)
+		storage.Expire(key+":hits", r.TTL)
 		return callAndSet(request, key, storage, call, r.TTL)
 	}
 

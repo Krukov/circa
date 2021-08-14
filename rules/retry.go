@@ -22,6 +22,7 @@ func (r *RetryRule) Process(request *message.Request, key string, storage storag
 		request.Logger.Info().Msgf("== Retrying request %v, err %v", retry, err)
 		retry += 1
 		hit = true
+		time.Sleep(time.Duration(retry) * r.Backoff)
 		resp, err = call(request)
 	}
 	return resp, hit, err

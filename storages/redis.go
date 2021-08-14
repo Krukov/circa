@@ -116,7 +116,7 @@ func (s *Redis) Get(key string) (*message.Response, error) {
 		s.client.Del(ctx, key)
 		return nil, NotFound
 	}
-	return &message.Response{Status: statusInt, Body: []byte(body), Headers: keys}, nil
+	return message.NewResponse(statusInt, []byte(body), keys), nil
 }
 
 func (s *Redis) Incr(key string) (int, error) {
