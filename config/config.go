@@ -65,6 +65,8 @@ func getRuleFromOptions(rule Rule) (rules.Rule, error) {
 	switch rule.Type {
 	case "proxy":
 		return convertToProxyRule(rule)
+	case "skip":
+		return convertToSkipRule(rule)
 	case "retry":
 		return convertToRetryRule(rule)
 	case "request_id":
@@ -89,6 +91,10 @@ func getRuleFromOptions(rule Rule) (rules.Rule, error) {
 
 func convertToProxyRule(rule Rule) (*rules.ProxyRule, error) {
 	return &rules.ProxyRule{Target: rule.Target, Method: rule.Method}, nil
+}
+
+func convertToSkipRule(rule Rule) (*rules.SkipRule, error) {
+	return &rules.SkipRule{}, nil
 }
 
 func convertToRateLimitRule(rule Rule) (*rules.RateLimitRule, error) {

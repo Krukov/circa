@@ -28,9 +28,15 @@
         "ttl": "10m"
       },
       {
-        "methods": ["POST", "DELETE", "PUT", "PATCH"],
         "type": "invalidate",
+        "methods": ["POST", "DELETE", "PUT", "PATCH"],
         "key": "posts-{id}:key"
+      }
+    ],
+    "/posts/3": [
+      {
+        "type": "skip",
+        "methods": ["GET", "POST", "DELETE", "PUT", "PATCH"]
       }
     ],
     "/*": [

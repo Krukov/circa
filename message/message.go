@@ -16,7 +16,9 @@ type Response struct {
 }
 
 func NewResponse(status int, body []byte, headers map[string]string) *Response {
-	headers["Content-Type"] = "application/json; charset=utf8"
+	if _, ok := headers["Content-Type"]; !ok {
+		headers["Content-Type"] = "application/json; charset=utf8"
+	}
 	return &Response{Status: status, Body: body, Headers: headers}
 }
 

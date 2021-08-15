@@ -7,6 +7,7 @@ Fast, smart and simple sidecar proxy
  - Ratelimits
  - RequestID
  - Indepotency 
+ - CircutBreaker
 
 
 TODO:
@@ -16,9 +17,7 @@ TODO:
  - early 
  - rate-limit with a bucket
  - circuit-breaker []
- - hot ? ( keep cache warm and regularly make requests)
-
-
+ - hot ? ( keep cache warm and regularly make a request)
 
 
 
