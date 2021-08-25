@@ -1,12 +1,14 @@
 package manage
 
 import (
-	"circa/handler"
 	"fmt"
 	"net/http"
+	_ "net/http/pprof"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
+
+	"circa/handler"
 )
 
 func Run(h *handler.Runner, port string) *http.Server {

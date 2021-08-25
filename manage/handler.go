@@ -33,6 +33,7 @@ func (h *runnerHandler) GetAllHandlers(w http.ResponseWriter, r *http.Request) {
 			Methods: handler.Methods,
 		})
 	}
+	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(&handlerItems)
 }
 
@@ -52,5 +53,6 @@ func (h *runnerHandler) GetHandlers(w http.ResponseWriter, r *http.Request) {
 			Methods: handler.Methods,
 		})
 	}
+	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(&handlerItems)
 }
