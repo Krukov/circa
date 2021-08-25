@@ -40,9 +40,9 @@ func main() {
 
 	figure.NewColorFigure("| CIRCA |", "cyberlarge", "yellow", true).Print()
 
-	r := handler.NewRunner(server.MakeRequest)
+	runner := handler.NewRunner(server.MakeRequest)
 	log.Info().Str("config", *configFilePath).Msg("Loading... ")
-	err := config.AdjustJsonConfig(r, *configFilePath)
+	err := config.AdjustJsonConfig(runner, *configFilePath)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Can't load config file")
 		return
@@ -53,8 +53,8 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	circa := server.Run(cancel, r, *port)
-	manageSrv := manage.Run(*managePort)
+	circa := server.Run(cancel, runner, *port)
+	manageSrv := manage.Run(runner, *managePort)
 	<-done
 	manageSrv.Shutdown(ctx)
 	circa.Shutdown()

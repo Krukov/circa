@@ -1,6 +1,7 @@
 package manage
 
 import (
+	"circa/handler"
 	"fmt"
 	"net/http"
 
@@ -8,8 +9,12 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func Run(port string) *http.Server {
+func Run(h *handler.Runner, port string) *http.Server {
+	runnerHandlers := newRunnerHandler(h)
 	http.Handle("/metrics", promhttp.Handler())
+
+	http.HandleFunc("/api/handlers", runnerHandlers.GetAllHandlers)
+	http.HandleFunc("/api/route", runnerHandlers.GetHandlers)
 	manageSrv := http.Server{Addr: fmt.Sprintf(":%s", port)}
 	go func() {
 		log.Info().Str("port", port).Msg("Start manage server")

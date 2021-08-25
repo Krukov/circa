@@ -1,9 +1,7 @@
 package handler
 
 import (
-	"strconv"
 	"strings"
-	"time"
 
 	"circa/message"
 	"circa/rules"
@@ -87,79 +85,10 @@ func (h *handler) makeKey(request *message.Request) string {
 	return formatTemplate(h.keyTemplate, params)
 }
 
-type Runner struct {
-	handlers    map[ruleName][]*handler
-	router      *node
-	makeRequest message.Requester
-	target      string
-	timeout     time.Duration
-}
-
-func NewRunner(makeRequest message.Requester) *Runner {
-	return &Runner{handlers: map[ruleName][]*handler{}, router: newTrie(), makeRequest: makeRequest}
-}
-
-func (r *Runner) AddHandlers(route string, handlers ...*handler) {
-	r.handlers[ruleName(route)] = append(r.handlers[ruleName(route)], handlers...)
-	r.router.addRule(route, ruleName(route))
-	for _, h := range handlers {
-		handlersGauge.WithLabelValues(h.rule.String(), route).Inc()
+func (h *handler) getMethods() []string {
+	methods := []string{}
+	for method := range h.methods {
+		methods = append(methods, method)
 	}
-}
-
-func (r *Runner) SetProxy(target string, timeout time.Duration) {
-	r.target = target
-	r.timeout = timeout
-}
-
-func (r *Runner) Handle(request *message.Request) (resp *message.Response, err error) {
-	request.Route = "-"
-	request.Host = r.target
-	request.Timeout = r.timeout
-	ruleNames, params, err := r.router.resolve(request.Path)
-	if err != nil {
-		if err == NotFound {
-			request.Logger.Debug().Msg("Route for request not found. Forward request")
-		} else {
-			return nil, err
-		}
-	}
-
-	makeRequest := r.makeRequest
-
-	for _, rule := range ruleNames {
-		handlers_, ok := r.handlers[rule]
-		if !ok {
-			request.Logger.Warn().Msg("Rule found but no handlers with this rule name")
-			return nil, NotFound
-		}
-		request.Params = params
-		request.Route = string(rule)
-		for _, handler_ := range handlers_ {
-			if _, ok := handler_.methods[strings.ToLower(request.Method)]; ok {
-				request.Logger.Debug().Msgf("%s Add handler %v", rule, handler_.rule.String())
-				makeRequest = handler_.ToCall(makeRequest, request.Route)
-			}
-		}
-	}
-	resp, err = makeRequest(request)
-	if err != nil {
-		return nil, err
-	}
-	request.Logger = request.Logger.With().Str("status", strconv.Itoa(resp.Status)).Logger()
-	if resp.CachedKey != "" {
-		request.Logger = request.Logger.With().Str("cache_key", resp.CachedKey).Logger()
-		resp.Headers["X-Circa-Cache-Key"] = resp.CachedKey
-	}
-	return
-}
-
-func mergeRequests(req1, req2 *message.Request) *message.Request {
-	if req1.Timeout.Seconds() == 0.0 {
-		req1.Timeout = req2.Timeout
-	}
-	if req1.Host == "" {
-		req1.Host = req2.Host
-	}
-	return req1
+	return methods
 }
