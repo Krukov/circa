@@ -13,7 +13,7 @@ import (
 func TestHitRule_Process_Nocache(t *testing.T) {
 	req := &message.Request{Method: "GET"}
 	noCacheResp := &message.Response{Body: []byte(`data`), Status: 200}
-	storage, _ := storages.NewMemStorageFromURL(nil)
+	storage, _ := storages.StorageFormDSN("mem://")
 
 	r := &HitRule{
 		TTL:             time.Second,
@@ -38,7 +38,7 @@ func TestHitRule_Process_Cache(t *testing.T) {
 	req := &message.Request{Method: "GET"}
 	noCacheResp := &message.Response{Body: []byte(`data`), Status: 200}
 	cacheResp := &message.Response{Body: []byte(`cache`), Status: 200}
-	storage, _ := storages.NewMemStorageFromURL(nil)
+	storage, _ := storages.StorageFormDSN("mem://")
 
 	storage.Set("key", cacheResp, time.Second)
 	storage.Incr("key:hits") // 1
@@ -66,7 +66,7 @@ func TestHitRule_Process_ProxyError(t *testing.T) {
 	req := &message.Request{Method: "GET"}
 	noCacheResp := &message.Response{Body: []byte(`data`), Status: 200}
 	cacheResp := &message.Response{Body: []byte(`cache`), Status: 200}
-	storage, _ := storages.NewMemStorageFromURL(nil)
+	storage, _ := storages.StorageFormDSN("mem://")
 
 	r := &HitRule{
 		TTL:             time.Second,
@@ -91,7 +91,7 @@ func TestHitRule_Process_CacheOverHit(t *testing.T) {
 	req := &message.Request{Method: "GET"}
 	noCacheResp := &message.Response{Body: []byte(`data`), Status: 200}
 	cacheResp := &message.Response{Body: []byte(`cache`), Status: 200}
-	storage, _ := storages.NewMemStorageFromURL(nil)
+	storage, _ := storages.StorageFormDSN("mem://")
 
 	storage.Set("key", cacheResp, time.Second)
 	storage.Incr("key:hits") // 1
@@ -120,7 +120,7 @@ func TestHitRule_Process_CachePreHit(t *testing.T) {
 	req := &message.Request{Method: "GET"}
 	noCacheResp := &message.Response{Body: []byte(`data`), Status: 200}
 	cacheResp := &message.Response{Body: []byte(`cache`), Status: 200}
-	storage, _ := storages.NewMemStorageFromURL(nil)
+	storage, _ := storages.StorageFormDSN("mem://")
 
 	storage.Set("key", cacheResp, time.Second)
 	storage.Incr("key:hits") // 1

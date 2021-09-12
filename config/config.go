@@ -30,6 +30,7 @@ func AdjustJsonConfig(r *handler.Runner, path string) error {
 		if err != nil {
 			return err
 		}
+		r.AddStorage(name, storagesMap[name])
 		log.Info().Msgf("Configured storage '%v' with dns '%v'", name, DSN)
 		defaultStorage = storagesMap[name]
 	}
@@ -45,7 +46,7 @@ func AdjustJsonConfig(r *handler.Runner, path string) error {
 	var storage storages.Storage
 	for rulePath, rule_ := range c.Rules {
 		for _, ruleOptions := range rule_ {
-			rule, err = getRuleFromOptions(ruleOptions)
+			rule, err = GetRuleFromOptions(ruleOptions)
 			if err != nil {
 				return err
 			}
@@ -61,7 +62,7 @@ func AdjustJsonConfig(r *handler.Runner, path string) error {
 
 }
 
-func getRuleFromOptions(rule Rule) (rules.Rule, error) {
+func GetRuleFromOptions(rule Rule) (rules.Rule, error) {
 	switch rule.Type {
 	case "proxy":
 		return convertToProxyRule(rule)

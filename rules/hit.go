@@ -54,6 +54,6 @@ func callAndSet(request *message.Request, key string, storage storages.Storage, 
 	if err != nil {
 		return nil, false, err
 	}
-	storage.Set(key, resp, ttl)
+	go storage.Set(key, resp, ttl)
 	return resp, false, err
 }

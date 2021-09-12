@@ -17,6 +17,7 @@ func Run(h *handler.Runner, port string) *http.Server {
 
 	http.HandleFunc("/api/handlers", runnerHandlers.GetAllHandlers)
 	http.HandleFunc("/api/route", runnerHandlers.GetHandlers)
+	http.HandleFunc("/api/route/add", runnerHandlers.AddRule)
 	manageSrv := http.Server{Addr: fmt.Sprintf(":%s", port)}
 	go func() {
 		log.Info().Str("port", port).Msg("Start manage server")

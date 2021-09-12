@@ -1,26 +1,53 @@
 package handler
 
 import (
+	"errors"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"circa/message"
+	"circa/storages"
 )
 
 type Runner struct {
 	handlers    map[ruleName][]*handler
+	storages    map[string]storages.Storage
 	router      *node
 	makeRequest message.Requester
 	target      string
 	timeout     time.Duration
 
-	lock *sync.Mutex
+	sLock *sync.Mutex
+	lock  *sync.Mutex
 }
 
 func NewRunner(makeRequest message.Requester) *Runner {
-	return &Runner{handlers: map[ruleName][]*handler{}, router: newTrie(), makeRequest: makeRequest, lock: &sync.Mutex{}}
+	return &Runner{
+		handlers:    map[ruleName][]*handler{},
+		storages:    map[string]storages.Storage{},
+		router:      newTrie(),
+		makeRequest: makeRequest,
+		lock:        &sync.Mutex{},
+		sLock:       &sync.Mutex{},
+	}
+}
+
+func (r *Runner) AddStorage(name string, storage storages.Storage) {
+	r.sLock.Lock()
+	r.storages[name] = storage
+	r.sLock.Unlock()
+}
+
+func (r *Runner) GetStorage(name string) (storages.Storage, error) {
+	r.sLock.Lock()
+	s, ok := r.storages[name]
+	r.sLock.Unlock()
+	if !ok {
+		return nil, errors.New("no storage")
+	}
+	return s, nil
 }
 
 func (r *Runner) AddHandlers(route string, handlers ...*handler) {

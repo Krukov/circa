@@ -29,6 +29,7 @@ type Rule struct {
 	SkipReturnRequestId bool `json:"skip_return"`
 
 	Target string `json:"target"`
+	Path   string `json:"path"`
 	Method string `json:"method"`
 }
 
