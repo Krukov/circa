@@ -19,8 +19,8 @@ type Runner struct {
 	target      string
 	timeout     time.Duration
 
-	sLock *sync.Mutex
-	lock  *sync.Mutex
+	sLock *sync.RWMutex
+	lock  *sync.RWMutex
 }
 
 func NewRunner(makeRequest message.Requester) *Runner {
@@ -29,21 +29,21 @@ func NewRunner(makeRequest message.Requester) *Runner {
 		storages:    map[string]storages.Storage{},
 		router:      newTrie(),
 		makeRequest: makeRequest,
-		lock:        &sync.Mutex{},
-		sLock:       &sync.Mutex{},
+		lock:        &sync.RWMutex{},
+		sLock:       &sync.RWMutex{},
 	}
 }
 
 func (r *Runner) AddStorage(name string, storage storages.Storage) {
 	r.sLock.Lock()
+	defer r.sLock.Unlock()
 	r.storages[name] = storage
-	r.sLock.Unlock()
 }
 
 func (r *Runner) GetStorage(name string) (storages.Storage, error) {
-	r.sLock.Lock()
+	r.sLock.RLock()
+	defer r.sLock.RUnlock()
 	s, ok := r.storages[name]
-	r.sLock.Unlock()
 	if !ok {
 		return nil, errors.New("no storage")
 	}
@@ -70,7 +70,8 @@ type HandlerInfo struct {
 
 func (r *Runner) GetHandlers() []*HandlerInfo {
 	handlerItems := []*HandlerInfo{}
-	r.lock.Lock()
+	r.lock.RLock()
+	defer r.lock.RUnlock()
 	for path, handlers := range r.handlers {
 		for _, h := range handlers {
 			handlerItems = append(handlerItems, &HandlerInfo{
@@ -82,23 +83,22 @@ func (r *Runner) GetHandlers() []*HandlerInfo {
 			})
 		}
 	}
-	r.lock.Unlock()
 	return handlerItems
 }
 
 func (r *Runner) GetHandlersFor(path, method string) ([]*HandlerInfo, map[string]string) {
 	handlerItems := []*HandlerInfo{}
-	r.lock.Lock()
+	r.lock.RLock()
 	ruleNames, params, err := r.router.resolve(path)
-	r.lock.Unlock()
+	r.lock.RUnlock()
 	if err != nil {
 		return handlerItems, params
 	}
 	req := message.Request{Method: method, Path: path, Params: params}
 	for _, rule := range ruleNames {
-		r.lock.Lock()
+		r.lock.RLock()
 		handlers_, ok := r.handlers[rule]
-		r.lock.Unlock()
+		r.lock.RUnlock()
 		req.Route = string(rule)
 		if !ok {
 			continue
@@ -127,9 +127,9 @@ func (r *Runner) Handle(request *message.Request) (resp *message.Response, err e
 	request.Route = "-"
 	request.Host = r.target
 	request.Timeout = r.timeout
-	r.lock.Lock()
+	r.lock.RLock()
 	ruleNames, params, err := r.router.resolve(request.Path)
-	r.lock.Unlock()
+	r.lock.RUnlock()
 	if err != nil {
 		if err == NotFound {
 			request.Logger.Debug().Msg("Route for request not found. Forward request")
@@ -141,9 +141,9 @@ func (r *Runner) Handle(request *message.Request) (resp *message.Response, err e
 	makeRequest := r.makeRequest
 
 	for _, rule := range ruleNames {
-		r.lock.Lock()
+		r.lock.RLock()
 		handlers_, ok := r.handlers[rule]
-		r.lock.Unlock()
+		r.lock.RUnlock()
 		if !ok {
 			request.Logger.Warn().Msg("Rule found but no handlers with this rule name")
 			return nil, NotFound
@@ -164,7 +164,7 @@ func (r *Runner) Handle(request *message.Request) (resp *message.Response, err e
 	request.Logger = request.Logger.With().Str("status", strconv.Itoa(resp.Status)).Logger()
 	if resp.CachedKey != "" {
 		request.Logger = request.Logger.With().Str("cache_key", resp.CachedKey).Logger()
-		resp.Headers["X-Circa-Cache-Key"] = resp.CachedKey
+		resp.SetHeader("X-Circa-Cache-Key", resp.CachedKey)
 	}
 	return
 }

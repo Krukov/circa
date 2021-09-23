@@ -8,6 +8,7 @@ import (
 type ProxyRule struct {
 	Target string
 	Method string
+	Path   string
 }
 
 func (r *ProxyRule) String() string {
@@ -23,6 +24,9 @@ func (r *ProxyRule) Process(request *message.Request, key string, storage storag
 		if r.Method == "GET" {
 			request.Body = nil
 		}
+	}
+	if r.Path != "" {
+		request.Path = r.Path
 	}
 	return simpleCall(request, call)
 }

@@ -82,7 +82,9 @@ func GetRuleFromOptions(rule Rule) (rules.Rule, error) {
 		return convertToHitRule(rule)
 	case "invalidate":
 		return convertToInvalidateRule(rule)
-	case "simple":
+	case "early":
+		return convertToEarlyCacheRule(rule)
+	case "cache":
 		return convertToCacheRule(rule)
 	case "":
 		return convertToCacheRule(rule)
@@ -91,7 +93,7 @@ func GetRuleFromOptions(rule Rule) (rules.Rule, error) {
 }
 
 func convertToProxyRule(rule Rule) (*rules.ProxyRule, error) {
-	return &rules.ProxyRule{Target: rule.Target, Method: rule.Method}, nil
+	return &rules.ProxyRule{Target: rule.Target, Method: rule.Method, Path: rule.Path}, nil
 }
 
 func convertToSkipRule(rule Rule) (*rules.SkipRule, error) {
@@ -109,7 +111,8 @@ func convertToIdempotencyRule(rule Rule) (*rules.IdempotencyRule, error) {
 }
 
 func convertToRetryRule(rule Rule) (*rules.RetryRule, error) {
-	return &rules.RetryRule{Count: rule.Count}, nil
+	backoff, err := timeFromString(rule.Backoff)
+	return &rules.RetryRule{Count: rule.Count, Backoff: backoff}, err
 }
 
 func convertToInvalidateRule(rule Rule) (*rules.InvalidateRule, error) {
@@ -123,6 +126,15 @@ func convertToInvalidateRule(rule Rule) (*rules.InvalidateRule, error) {
 func convertToCacheRule(rule Rule) (*rules.CacheRule, error) {
 	ttl, err := timeFromString(rule.TTL)
 	return &rules.CacheRule{TTL: ttl}, err
+}
+
+func convertToEarlyCacheRule(rule Rule) (*rules.EarlyCacheRule, error) {
+	ttl, err := timeFromString(rule.TTL)
+	if err != nil {
+		return nil, err
+	}
+	earlyTtl, errEarly := timeFromString(rule.EarlyTTL)
+	return &rules.EarlyCacheRule{TTL: ttl, EarlyTTL: earlyTtl}, errEarly
 }
 
 func convertToFailRule(rule Rule) (*rules.FailRule, error) {

@@ -12,7 +12,7 @@ import (
 
 func TestHitRule_Process_Nocache(t *testing.T) {
 	req := &message.Request{Method: "GET"}
-	noCacheResp := &message.Response{Body: []byte(`data`), Status: 200}
+	noCacheResp := message.NewResponse(200, []byte(`data`), map[string]string{})
 	storage, _ := storages.StorageFormDSN("mem://")
 
 	r := &HitRule{
@@ -36,8 +36,8 @@ func TestHitRule_Process_Nocache(t *testing.T) {
 
 func TestHitRule_Process_Cache(t *testing.T) {
 	req := &message.Request{Method: "GET"}
-	noCacheResp := &message.Response{Body: []byte(`data`), Status: 200}
-	cacheResp := &message.Response{Body: []byte(`cache`), Status: 200}
+	noCacheResp := message.NewResponse(200, []byte(`data`), map[string]string{})
+	cacheResp := message.NewResponse(200, []byte(`cache`), map[string]string{})
 	storage, _ := storages.StorageFormDSN("mem://")
 
 	storage.Set("key", cacheResp, time.Second)

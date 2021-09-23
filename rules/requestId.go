@@ -27,9 +27,9 @@ func (r *RequestIDRule) Process(request *message.Request, key string, storage st
 	if err != nil {
 		return nil, false, err
 	}
-	if !r.SkipCheckReturn && requestID != resp.Headers[r.HeaderName] {
-		request.Logger.Warn().Msgf("Request id of response doesn't match request value %v != %v", resp.Headers[r.HeaderName], requestID)
+	if !r.SkipCheckReturn && requestID != resp.GetHeader(r.HeaderName) {
+		request.Logger.Warn().Msgf("Request id of response doesn't match request value %v != %v", resp.GetHeader(r.HeaderName), requestID)
 	}
-	resp.Headers[r.HeaderName] = requestID
+	resp.SetHeader(r.HeaderName, requestID)
 	return resp, hit, err
 }

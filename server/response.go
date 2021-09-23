@@ -21,7 +21,7 @@ func responseError(ctx *fasthttp.RequestCtx, err error) {
 
 func responseFor(ctx *fasthttp.RequestCtx, response *message.Response) {
 	ctx.Response.SetStatusCode(response.Status)
-	for header, value := range response.Headers {
+	for header, value := range response.GetHeaders() {
 		ctx.Response.Header.Set(header, value)
 	}
 	fmt.Fprintf(ctx, string(response.Body))

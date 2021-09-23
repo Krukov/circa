@@ -11,11 +11,13 @@ import (
 var headersForbiddenToProxy = map[string]bool{"Connection": true, "Content-Length": true, "Keep-Alive": true}
 var headersForbiddenToPass = map[string]bool{"Accept-Encoding": true, "Connection": true}
 
+// var httpClient = fasthttp.Client{ReadTimeout: time.Second * 5, MaxConnsPerHost: 10} make it with closure
+
 func MakeRequest(request *message.Request) (*message.Response, error) {
-	httpClient := fasthttp.Client{ReadTimeout: time.Second * 5}
 	start := time.Now()
 	logger := request.Logger.With().
 		Str("host", request.Host).
+		Str("path", request.Path).
 		Str("timeout", request.Timeout.String()).
 		Logger()
 	logger.Info().Msg("->> Forward request")
@@ -37,7 +39,7 @@ func MakeRequest(request *message.Request) (*message.Response, error) {
 		}
 	}
 
-	if err := httpClient.DoTimeout(request_, response_, request.Timeout); err != nil {
+	if err := fasthttp.DoTimeout(request_, response_, request.Timeout); err != nil {
 		return nil, err
 	}
 
@@ -51,6 +53,6 @@ func MakeRequest(request *message.Request) (*message.Response, error) {
 			headers[string(key)] = string(value)
 		}
 	})
-	headers["X-Circa-Requester-Spend"] = strconv.Itoa(int(time.Since(start).Milliseconds()))
+	// headers["X-Circa-Requester-Spend"] = strconv.Itoa(int(time.Since(start).Milliseconds()))
 	return message.NewResponse(response_.StatusCode(), data, headers), nil
 }

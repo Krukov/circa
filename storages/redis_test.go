@@ -20,7 +20,7 @@ func TestRedisStoreSetAndGet(t *testing.T) {
 	ctx := context.Background()
 	defer rdb.Del(ctx, "key").Err()
 
-	resp := &message.Response{Status: 201, Body: []byte(`data`), Headers: map[string]string{"Request-Id": "test"}}
+	resp := message.NewResponse(201, []byte(`data`), map[string]string{"Request-Id": "test"})
 
 	_, err := s.Get("key")
 	if err == nil {

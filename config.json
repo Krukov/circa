@@ -1,22 +1,9 @@
 {
   "storages": {
-    "m": "mem://?size=5"
+    "mem": "redis://localhost/2"
   },
   "rules": {
     "/posts/{id}": [
-      {
-        "type": "rate-limit",
-        "key": "post:rate-limit",
-        "ttl": "10m",
-        "hits": 100
-      },
-      {
-        "type": "rate-limit",
-        "key": "post:rate-limit:{id}",
-        "ttl": "1m",
-        "block": "5m",
-        "hits": 10
-      },
       {
         "type": "idempotency",
         "key": "post-ide-{R:body|hash}",
@@ -25,6 +12,9 @@
       },
       {
         "key": "posts-{id}:key",
+        "type": "early",
+        "storage": "mem",
+        "early_ttl": "1m",
         "ttl": "10m"
       },
       {
@@ -39,19 +29,20 @@
         "methods": ["GET", "POST", "DELETE", "PUT", "PATCH"]
       }
     ],
+    "hit/posts": [
+      {
+        "type": "hit",
+        "ttl": "10m",
+        "key": "posts:hit:key",
+        "hits": 100,
+        "update_after": 50
+      },
+      {
+        "type": "proxy",
+        "path": "/posts/"
+      }
+    ],
     "/*": [
-      {
-        "type": "rate-limit",
-        "key": "rl:{R:path}",
-        "ttl": "1m",
-        "block": "5m",
-        "hits": 300
-      },
-      {
-        "type": "fail",
-        "key": "f:{R:path}",
-        "ttl": "24h"
-      },
       {
         "type": "request_id",
         "methods": ["GET", "POST", "DELETE", "PUT", "PATCH"],

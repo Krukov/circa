@@ -5,6 +5,7 @@ import (
 	"circa/storages"
 	"context"
 	"flag"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -21,9 +22,9 @@ import (
 func main() {
 	debug := flag.Bool("debug", false, "dev mode")
 	jsonLogs := flag.Bool("json-out", false, "json logging")
-	configFilePath := flag.String("config", "./config.json", "Config path")
+	configFilePath := flag.String("config", "./circa.json", "Config path")
 	port := flag.String("port", "8000", "Listen port")
-	managePort := flag.String("manage-port", "9991", "Listen port")
+	managePort := flag.String("manage-port", "", "Listen port")
 	flag.Parse()
 
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)
@@ -54,8 +55,13 @@ func main() {
 	defer cancel()
 
 	circa := server.Run(cancel, runner, *port)
-	manageSrv := manage.Run(runner, *managePort)
+	var manageSrv *http.Server
+	if *managePort != "" {
+		manageSrv = manage.Run(runner, *managePort)
+	}
 	<-done
-	manageSrv.Shutdown(ctx)
+	if manageSrv != nil {
+		manageSrv.Shutdown(ctx)
+	}
 	circa.Shutdown()
 }

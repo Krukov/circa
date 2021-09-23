@@ -64,7 +64,7 @@ func (s *Redis) Set(key string, value *message.Response, ttl time.Duration) (boo
 		operationHistogram.WithLabelValues(s.String(), "set").Observe(time.Since(start).Seconds())
 	}()
 	values := map[string]string{}
-	for header, hValue := range value.Headers {
+	for header, hValue := range value.GetHeaders() {
 		values[header] = hValue
 	}
 	values["body"] = string(value.Body)
@@ -86,7 +86,7 @@ func (s *Redis) Del(key string) (bool, error) {
 	defer func() {
 		operationHistogram.WithLabelValues(s.String(), "del").Observe(time.Since(start).Seconds())
 	}()
-	deleted, err := s.client.Del(ctx, "key").Result()
+	deleted, err := s.client.Del(ctx, key).Result()
 	if err != nil {
 		return false, err
 	}

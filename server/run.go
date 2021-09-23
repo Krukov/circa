@@ -39,7 +39,7 @@ func Run(cancel context.CancelFunc, h *handler.Runner, port string) *fasthttp.Se
 		}
 		request.Logger.Info().Msg("<- Response")
 		requestsLatency.WithLabelValues(request.Method, request.Route, strconv.Itoa(response.Status)).Observe(time.Since(start).Seconds())
-		response.Headers["X-Circa-Proxy-Spend"] = strconv.Itoa(int(time.Since(start).Milliseconds()))
+		// response.SetHeader("X-Circa-Proxy-Spend", strconv.Itoa(int(time.Since(start).Milliseconds())))
 		responseFor(ctx, response)
 	}
 
@@ -61,6 +61,7 @@ func requestFromHttpRequest(ctx *fasthttp.RequestCtx) *message.Request {
 	ctx.Request.Header.VisitAll(func(key, value []byte) {
 		headers[string(key)] = string(value)
 	})
+	ctx.QueryArgs()
 	return &message.Request{
 		Method:  string(ctx.Method()),
 		Path:    string(ctx.Path()),

@@ -3,6 +3,7 @@ package storages
 import (
 	"net/url"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/bluele/gcache"
@@ -11,7 +12,8 @@ import (
 )
 
 type Memory struct {
-	gc gcache.Cache
+	gc       gcache.Cache
+	incrLock sync.Mutex
 }
 
 func NewMemStorageFromURL(sURL *url.URL) (*Memory, error) {
@@ -24,7 +26,7 @@ func NewMemStorageFromURL(sURL *url.URL) (*Memory, error) {
 		}
 	}
 	gc := gcache.New(size).LRU().Build()
-	return &Memory{gc: gc}, nil
+	return &Memory{gc: gc, incrLock: sync.Mutex{}}, nil
 }
 
 func (s *Memory) String() string {
@@ -51,11 +53,13 @@ func (s *Memory) Get(key string) (*message.Response, error) {
 
 func (s *Memory) Incr(key string) (int, error) {
 	countInt := 0
+	s.incrLock.Lock()
+	defer s.incrLock.Unlock()
 	count, err := s.gc.Get(key)
 	if err == nil {
 		countInt = count.(int)
 	}
-	s.gc.Set(key, countInt)
+	s.gc.Set(key, countInt+1)
 	return countInt + 1, nil
 }
 

@@ -3,6 +3,7 @@ package rules
 import (
 	"circa/message"
 	"circa/storages"
+	"strconv"
 	"time"
 )
 
@@ -22,26 +23,24 @@ func (r *HitRule) Process(request *message.Request, key string, storage storages
 		// Error at storage connection or so on : just proxy request
 		return simpleCall(request, call)
 	}
-	if hits == 1 {
-		// No cache record - call and save result with ttl
-		storage.Expire(key+":hits", r.TTL)
-		return callAndSet(request, key, storage, call, r.TTL)
-	}
+	hits -= 1
 
 	if hits > r.Hits {
 		return updateCache(request, key, storage, call, r.TTL)
 	} else {
-		if hits == r.UpdateAfterHits {
+		if hits == r.UpdateAfterHits && hits != 0 {
 			go func() {
 				updateCache(request, key, storage, call, r.TTL)
 			}()
 		}
 		resp, err = storage.Get(key)
 		if err == nil {
+			resp.CachedKey = key
+			resp.SetHeader("X-Circa-Hits-To-Update", strconv.Itoa(r.Hits-hits))
 			return resp, true, err
 		}
+		return updateCache(request, key, storage, call, r.TTL)
 	}
-	return simpleCall(request, call)
 }
 
 func updateCache(request *message.Request, key string, storage storages.Storage, call message.Requester, ttl time.Duration) (*message.Response, bool, error) {
@@ -54,6 +53,8 @@ func callAndSet(request *message.Request, key string, storage storages.Storage, 
 	if err != nil {
 		return nil, false, err
 	}
-	go storage.Set(key, resp, ttl)
+	storage.Set(key, resp, ttl)
+	storage.Incr(key + ":hits")
+	storage.Expire(key+":hits", ttl)
 	return resp, false, err
 }
