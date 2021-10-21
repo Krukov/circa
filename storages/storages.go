@@ -22,6 +22,9 @@ type Storage interface {
 	Incr(key string) (int, error)
 	Del(key string) (bool, error)
 
+	// SetRow(key string, value string)
+	// GetRow(key string, value string)
+
 	Expire(key string, ttl time.Duration) error
 }
 

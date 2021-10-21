@@ -75,7 +75,7 @@ Specify target host and timeout for forwarding requests
 
  There are a list of rules types and parameters for each:
 
-1) Cache with ttl
+1. Cache with ttl
 ```json
 {
     "type": "cache",  // by default
@@ -84,7 +84,7 @@ Specify target host and timeout for forwarding requests
 }
 ```
 
-2) Cache with early expiration - 
+2. Cache with early expiration - 
 ```json
 {
     "type": "early",
@@ -94,7 +94,7 @@ Specify target host and timeout for forwarding requests
 }
 ```
 
-3) Cache with hit expiration - 
+3. Cache with hit expiration - 
 ```json
 {
     "type": "hit",
@@ -105,7 +105,7 @@ Specify target host and timeout for forwarding requests
 }
 ```
 
-4) Failover cache - 
+4. Failover cache - 
 ```json
 {
     "type": "fail",
@@ -114,7 +114,7 @@ Specify target host and timeout for forwarding requests
 }
 ```
 
-5) Rate limit - 
+5. Rate limit - 
 ```json
 {
     "type": "rate-limit",
@@ -124,7 +124,7 @@ Specify target host and timeout for forwarding requests
 }
 ```
 
-6) Retry - 
+6. Retry - 
 ```json
 {
     "type": "retry",
@@ -135,7 +135,7 @@ Specify target host and timeout for forwarding requests
 ```
 
 
-7) request_id -  `skip_return` - check that backend return response with tha same request ID
+7. request_id -  `skip_return` - check that backend return response with tha same request ID
 ```json
 {
     "type": "request_id",
@@ -144,7 +144,7 @@ Specify target host and timeout for forwarding requests
 }
 ```
 
-8) idempotency
+8. idempotency
 ```json
 {
     "type": "idempotency",
@@ -153,7 +153,7 @@ Specify target host and timeout for forwarding requests
 }
 ```
 
-9) invalidate
+9. invalidate
 ```json
 {
     "type": "invalidate",
@@ -162,13 +162,14 @@ Specify target host and timeout for forwarding requests
 }
 ```
 
-10) skip - will skip all rules see "Routing"
+10. skip - will skip all rules see "Routing"
 ```json
 {
     "type": "skip"
 }
 ```
-11) proxy - rule to change method or target host for proxing 
+
+11. proxy - rule to change method or target host for proxing 
 ```json
 {
     "type": "proxy",

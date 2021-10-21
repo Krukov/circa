@@ -120,7 +120,13 @@ func (r *Runner) GetHandlersFor(path, method string) ([]*HandlerInfo, map[string
 
 func (r *Runner) SetProxy(target string, timeout time.Duration) {
 	r.target = target
-	r.timeout = timeout
+	if timeout.Microseconds() > 0.0 {
+		r.timeout = timeout
+	}
+}
+
+func (r *Runner) GetProxyOptions() (string, time.Duration) {
+	return r.target, r.timeout
 }
 
 func (r *Runner) Handle(request *message.Request) (resp *message.Response, err error) {

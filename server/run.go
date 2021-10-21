@@ -66,5 +66,6 @@ func requestFromHttpRequest(ctx *fasthttp.RequestCtx) *message.Request {
 		Method:  string(ctx.Method()),
 		Path:    string(ctx.Path()),
 		Headers: headers,
+		Body:    ctx.PostBody(),
 	}
 }

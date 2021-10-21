@@ -33,6 +33,7 @@ func MakeRequest(request *message.Request) (*message.Response, error) {
 
 	request_.Header.SetMethod(request.Method)
 	request_.SetRequestURI(request.Host + request.Path)
+	request_.SetBody(request.Body)
 	for header := range request.Headers {
 		if !headersForbiddenToPass[header] {
 			request_.Header.Set(header, request.Headers[header])
@@ -53,6 +54,6 @@ func MakeRequest(request *message.Request) (*message.Response, error) {
 			headers[string(key)] = string(value)
 		}
 	})
-	// headers["X-Circa-Requester-Spend"] = strconv.Itoa(int(time.Since(start).Milliseconds()))
+	headers["X-Circa-Requester-Spend"] = strconv.Itoa(int(time.Since(start).Milliseconds()))
 	return message.NewResponse(response_.StatusCode(), data, headers), nil
 }

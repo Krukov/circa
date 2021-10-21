@@ -5,6 +5,7 @@ import (
 	"circa/handler"
 	"circa/message"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 )
@@ -25,12 +26,21 @@ type HandlerItem struct {
 	Methods []string `json:"methods"`
 }
 
+type ProxyTarget struct {
+	Target  string   `json:"target"`
+	Timeout Duration `json:"timeout"`
+}
+
 type errorResponse struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
 }
 
 func (h *runnerHandler) GetAllHandlers(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, &errorResponse{"METHOD_NOT_ALLOWED", "Method not allowed"})
+		return
+	}
 	handlerItems := []*HandlerItem{}
 	for _, handler := range h.runner.GetHandlers() {
 		handlerItems = append(handlerItems, &HandlerItem{
@@ -46,6 +56,10 @@ func (h *runnerHandler) GetAllHandlers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *runnerHandler) GetHandlers(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, &errorResponse{"METHOD_NOT_ALLOWED", "Method not allowed"})
+		return
+	}
 	handlerItems := []*HandlerItem{}
 	method := "get"
 	if r.URL.Query().Get("method") != "" {
@@ -66,10 +80,14 @@ func (h *runnerHandler) GetHandlers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *runnerHandler) AddRule(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, &errorResponse{"METHOD_NOT_ALLOWED", "Method not allowed"})
+		return
+	}
 	var ruleOptions config.Rule
 	err := json.NewDecoder(r.Body).Decode(&ruleOptions)
 	if err != nil {
-		writeError(w, &errorResponse{"FORMAT_ERROR", "Can't decode body"})
+		writeError(w, &errorResponse{"FORMAT_ERROR", fmt.Sprintf("Can't decode body %e", err)})
 		return
 	}
 	rule, err := config.GetRuleFromOptions(ruleOptions)
@@ -84,6 +102,32 @@ func (h *runnerHandler) AddRule(w http.ResponseWriter, r *http.Request) {
 	}
 	defRequest := &message.Request{Host: ruleOptions.Target, Timeout: timeFromString(ruleOptions.Timeout)}
 	h.runner.AddHandlers(ruleOptions.Path, handler.NewHandler(rule, storage, ruleOptions.Key, defRequest, ruleOptions.Methods))
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	w.Write([]byte(`{"status": "OK"}`))
+}
+
+func (h *runnerHandler) Target(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		target, timeout := h.runner.GetProxyOptions()
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(&ProxyTarget{Target: target, Timeout: Duration(timeout)})
+		return
+	}
+	if r.Method != http.MethodPost {
+		writeError(w, &errorResponse{"METHOD_NOT_ALLOWED", "Method not allowed"})
+		return
+	}
+	var targetOptions ProxyTarget
+	err := json.NewDecoder(r.Body).Decode(&targetOptions)
+	if err != nil {
+		writeError(w, &errorResponse{"FORMAT_ERROR", fmt.Sprintf("Can't decode body %v", err)})
+		return
+	}
+	h.runner.SetProxy(targetOptions.Target, time.Duration(targetOptions.Timeout))
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(`{"status": "OK"}`))
 }
 
 func timeFromString(in string) time.Duration {
@@ -96,5 +140,6 @@ func timeFromString(in string) time.Duration {
 
 func writeError(w http.ResponseWriter, err *errorResponse) {
 	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusBadRequest)
 	_ = json.NewEncoder(w).Encode(err)
 }
