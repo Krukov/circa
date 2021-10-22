@@ -3,6 +3,8 @@ package handler
 import (
 	"strings"
 
+	"github.com/google/uuid"
+
 	"circa/message"
 	"circa/rules"
 	"circa/storages"
@@ -11,6 +13,7 @@ import (
 var ALL_METHODS = map[string]bool{"get": true, "post": true, "head": true, "put": true, "patch": true, "options": true}
 
 type handler struct {
+	id          uuid.UUID
 	keyTemplate string
 	rule        rules.Rule
 	storage     storages.Storage
@@ -30,6 +33,7 @@ func NewHandler(rule rules.Rule, storage storages.Storage, keyTemplate string, d
 		methodsMap["get"] = true
 	}
 	return &handler{
+		id:             uuid.New(),
 		rule:           rule,
 		storage:        storage,
 		keyTemplate:    keyTemplate,

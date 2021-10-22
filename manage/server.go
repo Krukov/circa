@@ -15,10 +15,9 @@ func Run(h *handler.Runner, port string) *http.Server {
 	runnerHandlers := newRunnerHandler(h)
 	http.Handle("/metrics", promhttp.Handler())
 
-	http.HandleFunc("/api/handlers", runnerHandlers.GetAllHandlers)
-	http.HandleFunc("/api/route", runnerHandlers.GetHandlers)
-	http.HandleFunc("/api/route/add", runnerHandlers.AddRule)
-	http.HandleFunc("/api/target", runnerHandlers.Target)
+	http.HandleFunc("/api/handler/", runnerHandlers.Handlers)
+	http.HandleFunc("/api/route/", runnerHandlers.GetHandlersByRoute)
+	http.HandleFunc("/api/target/", runnerHandlers.Target)
 
 	manageSrv := http.Server{Addr: fmt.Sprintf(":%s", port)}
 	go func() {

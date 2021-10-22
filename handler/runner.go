@@ -9,10 +9,12 @@ import (
 
 	"circa/message"
 	"circa/storages"
+
+	"github.com/google/uuid"
 )
 
 type Runner struct {
-	handlers    map[ruleName][]*handler
+	handlers    map[ruleName]map[uuid.UUID]*handler
 	storages    map[string]storages.Storage
 	router      *node
 	makeRequest message.Requester
@@ -25,7 +27,7 @@ type Runner struct {
 
 func NewRunner(makeRequest message.Requester) *Runner {
 	return &Runner{
-		handlers:    map[ruleName][]*handler{},
+		handlers:    map[ruleName]map[uuid.UUID]*handler{},
 		storages:    map[string]storages.Storage{},
 		router:      newTrie(),
 		makeRequest: makeRequest,
@@ -50,17 +52,33 @@ func (r *Runner) GetStorage(name string) (storages.Storage, error) {
 	return s, nil
 }
 
-func (r *Runner) AddHandlers(route string, handlers ...*handler) {
+func (r *Runner) AddHandlers(route string, handlers ...*handler) []*HandlerInfo {
 	r.lock.Lock()
-	r.handlers[ruleName(route)] = append(r.handlers[ruleName(route)], handlers...)
+	for _, h := range handlers {
+		if _, ok := r.handlers[ruleName(route)]; !ok {
+			r.handlers[ruleName(route)] = map[uuid.UUID]*handler{}
+		}
+		r.handlers[ruleName(route)][h.id] = h
+	}
 	r.router.addRule(route, ruleName(route))
 	r.lock.Unlock()
+	handlerItems := []*HandlerInfo{}
 	for _, h := range handlers {
 		handlersGauge.WithLabelValues(h.rule.String(), route).Inc()
+		handlerItems = append(handlerItems, &HandlerInfo{
+			ID:      h.id,
+			Path:    route,
+			Key:     h.keyTemplate,
+			Rule:    h.rule.String(),
+			Storage: h.storage.String(),
+			Methods: h.getMethods(),
+		})
 	}
+	return handlerItems
 }
 
 type HandlerInfo struct {
+	ID      uuid.UUID
 	Path    string
 	Key     string
 	Rule    string
@@ -75,6 +93,7 @@ func (r *Runner) GetHandlers() []*HandlerInfo {
 	for path, handlers := range r.handlers {
 		for _, h := range handlers {
 			handlerItems = append(handlerItems, &HandlerInfo{
+				ID:      h.id,
 				Path:    string(path),
 				Key:     h.keyTemplate,
 				Rule:    h.rule.String(),
@@ -106,6 +125,7 @@ func (r *Runner) GetHandlersFor(path, method string) ([]*HandlerInfo, map[string
 		for _, h := range handlers_ {
 			if _, ok := h.methods[strings.ToLower(method)]; ok {
 				handlerItems = append(handlerItems, &HandlerInfo{
+					ID:      h.id,
 					Path:    string(rule),
 					Key:     h.makeKey(&req),
 					Rule:    h.rule.String(),
@@ -116,6 +136,41 @@ func (r *Runner) GetHandlersFor(path, method string) ([]*HandlerInfo, map[string
 		}
 	}
 	return handlerItems, params
+}
+
+func (r *Runner) GetHandlerByID(id uuid.UUID) *HandlerInfo {
+	var ok bool
+	var h *handler
+	r.lock.RLock()
+	defer r.lock.RUnlock()
+	for rule, handlers := range r.handlers {
+		h, ok = handlers[id]
+		if ok {
+			return &HandlerInfo{
+				ID:      h.id,
+				Path:    string(rule),
+				Key:     h.keyTemplate,
+				Rule:    h.rule.String(),
+				Storage: h.storage.String(),
+				Methods: h.getMethods(),
+			}
+		}
+	}
+	return nil
+}
+
+func (r *Runner) DelHandlerByID(id uuid.UUID) error {
+	var ok bool
+	r.lock.RLock()
+	defer r.lock.RUnlock()
+	for rule, handlers := range r.handlers {
+		_, ok = handlers[id]
+		if ok {
+			delete(r.handlers[rule], id)
+			return nil
+		}
+	}
+	return errors.New("not found")
 }
 
 func (r *Runner) SetProxy(target string, timeout time.Duration) {
