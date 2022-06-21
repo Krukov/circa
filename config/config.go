@@ -1,163 +1,145 @@
 package config
 
 import (
-	"fmt"
-	"io/ioutil"
+	"errors"
+	"sync"
 	"time"
 
-	"circa/handler"
-	"circa/message"
+	"circa/resolver"
 	"circa/rules"
 	"circa/storages"
 
 	"github.com/rs/zerolog/log"
 )
 
-func AdjustJsonConfig(r *handler.Runner, path string) error {
-	jsonRaw, err := ioutil.ReadFile(path)
-	if err != nil {
-		return err
+type configRepository interface {
+	GetStorages() (map[string]string, error)
+	GetStorage(name string) (string, error)
+	AddStorage(name string, DSN string) error
+	RemoveStorage(name string) error
+
+	SetDefaultStorage(name string) error
+	GetDefaultStorage() (string, error)
+
+	GetTarget() (string, error)
+
+	GetTimeout() (time.Duration, error)
+
+	GetRoutes() ([]string, error)
+	GetRules(route string) ([]Rule, error)
+	// AddRule(route string, rule Rule) error
+	// RemoveRule(route, kind, key string) error
+
+	// Sync()
+}
+
+type Config struct {
+	repository configRepository
+	storages   map[string]storages.Storage
+	resolver   *resolver.Resolver
+
+	target  string
+	timeout time.Duration
+
+	lock *sync.RWMutex
+}
+
+func (c *Config) Resolve(path string) (rules []*rules.Rule, params map[string]string, err error) {
+	return c.resolver.Resolve(path)
+}
+
+func (c *Config) GetTarget() (string, error) {
+	c.lock.RLock()
+	if c.target != "" {
+		defer c.lock.RUnlock()
+		return c.target, nil
 	}
-	c, err := newFromJson(jsonRaw)
+	c.lock.RUnlock()
+	c.lock.Lock()
+	defer c.lock.Unlock()
+	target, err := c.repository.GetTarget()
 	if err != nil {
-		return err
+		return "", err
+	}
+	c.target = target
+	return target, nil
+}
+
+func (c *Config) GetTimeout() (time.Duration, error) {
+	c.lock.RLock()
+	if c.timeout != 0 {
+		defer c.lock.RUnlock()
+		return c.timeout, nil
+	}
+	c.lock.RUnlock()
+	// Take write lock
+	c.lock.Lock()
+	defer c.lock.Unlock()
+	timeout, err := c.repository.GetTimeout()
+	if err != nil {
+		return 0, err
+	}
+	c.timeout = timeout
+	return timeout, nil
+}
+
+func NewConfigFromDSN(dsn string, resolver *resolver.Resolver) (*Config, error) {
+	repo, err := newFileConfig(dsn)
+	if err != nil {
+		return nil, err
+	}
+	storagesMap := map[string]storages.Storage{}
+	storagesFromConfig, err := repo.GetStorages()
+	if err != nil {
+		return nil, err
 	}
 
-	storagesMap := map[string]storages.Storage{}
-	var defaultStorage storages.Storage
-	for name, DSN := range c.Storages {
+	for name, DSN := range storagesFromConfig {
 		storagesMap[name], err = storages.StorageFormDSN(DSN)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		r.AddStorage(name, storagesMap[name])
 		log.Info().Msgf("Configured storage '%v' with dns '%v'", name, DSN)
-		defaultStorage = storagesMap[name]
 	}
 
-	log.Info().Msgf("Default storage is '%v'", defaultStorage.String())
-	timeout, err := timeFromString(c.Options.Timeout)
+	// defRequest := &message.Request{Host: c.Options.Target, Timeout: timeout} // Move to runner
+	routes, err := repo.GetRoutes()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	defRequest := &message.Request{Host: c.Options.Target, Timeout: timeout}
-	var rule rules.Rule
-	var ok bool
 	var storage storages.Storage
-	for rulePath, rule_ := range c.Rules {
-		for _, ruleOptions := range rule_ {
-			rule, err = GetRuleFromOptions(ruleOptions)
-			if err != nil {
-				return err
-			}
+	var ok bool
+	defaultStorageName, err := repo.GetDefaultStorage()
+	if err != nil {
+		return nil, err
+	}
+	defaultStorage, ok := storagesMap[defaultStorageName]
+	if !ok {
+		return nil, errors.New("wrong default Storage setup")
+	}
+
+	for _, route := range routes {
+		rules, err := repo.GetRules(route)
+		if err != nil {
+			return nil, err
+		}
+		for _, ruleOptions := range rules {
 			storage, ok = storagesMap[ruleOptions.Storage]
 			if !ok {
 				storage = defaultStorage
 			}
-			r.AddHandlers(rulePath, handler.NewHandler(rule, storage, ruleOptions.Key, defRequest, ruleOptions.Methods))
+			rule, err := getRuleFromOptions(ruleOptions, storage, route)
+			if err != nil {
+				return nil, err
+			}
+
+			resolver.Add(route, rule)
 		}
 	}
-	r.SetProxy(c.Options.Target, timeout)
-	return nil
-
-}
-
-func GetRuleFromOptions(rule Rule) (rules.Rule, error) {
-	switch rule.Type {
-	case "proxy":
-		return convertToProxyRule(rule)
-	case "skip":
-		return convertToSkipRule(rule)
-	case "retry":
-		return convertToRetryRule(rule)
-	case "request_id":
-		return convertToRequestIDRule(rule)
-	case "rate-limit":
-		return convertToRateLimitRule(rule)
-	case "idempotency":
-		return convertToIdempotencyRule(rule)
-	case "fail":
-		return convertToFailRule(rule)
-	case "hit":
-		return convertToHitRule(rule)
-	case "invalidate":
-		return convertToInvalidateRule(rule)
-	case "early":
-		return convertToEarlyCacheRule(rule)
-	case "cache":
-		return convertToCacheRule(rule)
-	case "":
-		return convertToCacheRule(rule)
-	}
-	return nil, fmt.Errorf("unnown rule type '%s'", rule.Type)
-}
-
-func convertToProxyRule(rule Rule) (*rules.ProxyRule, error) {
-	return &rules.ProxyRule{Target: rule.Target, Method: rule.Method, Path: rule.Path}, nil
-}
-
-func convertToSkipRule(rule Rule) (*rules.SkipRule, error) {
-	return &rules.SkipRule{}, nil
-}
-
-func convertToRateLimitRule(rule Rule) (*rules.RateLimitRule, error) {
-	ttl, err := timeFromString(rule.TTL)
-	return &rules.RateLimitRule{TTL: ttl, Limit: rule.Hits}, err
-}
-
-func convertToIdempotencyRule(rule Rule) (*rules.IdempotencyRule, error) {
-	ttl, err := timeFromString(rule.TTL)
-	return &rules.IdempotencyRule{TTL: ttl}, err
-}
-
-func convertToRetryRule(rule Rule) (*rules.RetryRule, error) {
-	backoff, err := timeFromString(rule.Backoff)
-	return &rules.RetryRule{Count: rule.Count, Backoff: backoff}, err
-}
-
-func convertToInvalidateRule(rule Rule) (*rules.InvalidateRule, error) {
-	methods := map[string]bool{}
-	for _, method := range rule.Methods {
-		methods[method] = true
-	}
-	return &rules.InvalidateRule{Methods: methods}, nil
-}
-
-func convertToCacheRule(rule Rule) (*rules.CacheRule, error) {
-	ttl, err := timeFromString(rule.TTL)
-	return &rules.CacheRule{TTL: ttl}, err
-}
-
-func convertToEarlyCacheRule(rule Rule) (*rules.EarlyCacheRule, error) {
-	ttl, err := timeFromString(rule.TTL)
-	if err != nil {
-		return nil, err
-	}
-	earlyTtl, errEarly := timeFromString(rule.EarlyTTL)
-	return &rules.EarlyCacheRule{TTL: ttl, EarlyTTL: earlyTtl}, errEarly
-}
-
-func convertToFailRule(rule Rule) (*rules.FailRule, error) {
-	ttl, err := timeFromString(rule.TTL)
-	return &rules.FailRule{TTL: ttl}, err
-}
-
-func convertToRequestIDRule(rule Rule) (*rules.RequestIDRule, error) {
-	header := rule.RequestIDHeaderName
-	if header == "" {
-		header = "X-Request-ID"
-	}
-	return &rules.RequestIDRule{HeaderName: header, SkipCheckReturn: rule.SkipReturnRequestId}, nil
-}
-
-func convertToHitRule(rule Rule) (*rules.HitRule, error) {
-	ttl, err := timeFromString(rule.TTL)
-	return &rules.HitRule{TTL: ttl, Hits: rule.Hits, UpdateAfterHits: rule.UpdateAfterHits}, err
-}
-
-func timeFromString(in string) (time.Duration, error) {
-	if in == "" {
-		return time.Second, nil
-	}
-	return time.ParseDuration(in)
+	return &Config{
+		repository: repo,
+		resolver:   resolver,
+		storages:   storagesMap,
+		lock:       &sync.RWMutex{},
+	}, nil
 }

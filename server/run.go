@@ -8,13 +8,14 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	"circa/handler"
 	"circa/message"
+	"circa/resolver"
+	"circa/runner"
 
 	"github.com/valyala/fasthttp"
 )
 
-func Run(cancel context.CancelFunc, h *handler.Runner, port string) *fasthttp.Server {
+func Run(cancel context.CancelFunc, r *runner.Runner, port string) *fasthttp.Server {
 	requestHandler := func(ctx *fasthttp.RequestCtx) {
 		start := time.Now()
 		request := requestFromHttpRequest(ctx)
@@ -25,9 +26,9 @@ func Run(cancel context.CancelFunc, h *handler.Runner, port string) *fasthttp.Se
 			Logger()
 		request.Logger = logger
 		request.Logger.Info().Msg("-> Request")
-		response, err := h.Handle(request)
+		response, err := r.Handle(request, MakeRequest)
 		if err != nil {
-			if err == handler.NotFound {
+			if err == resolver.NotFound {
 				responseNotFound(ctx)
 				request.Logger.Warn().Msg("<- Route not found")
 			} else {
@@ -39,7 +40,7 @@ func Run(cancel context.CancelFunc, h *handler.Runner, port string) *fasthttp.Se
 		}
 		request.Logger.Info().Msg("<- Response")
 		requestsLatency.WithLabelValues(request.Method, request.Route, strconv.Itoa(response.Status)).Observe(time.Since(start).Seconds())
-		// response.SetHeader("X-Circa-Proxy-Spend", strconv.Itoa(int(time.Since(start).Milliseconds())))
+		response.SetHeader("X-Circa-Proxy-Spend", strconv.Itoa(int(time.Since(start).Milliseconds())))
 		responseFor(ctx, response)
 	}
 

@@ -1,4 +1,4 @@
-package handler
+package key_template
 
 import (
 	"crypto/md5"
@@ -11,7 +11,7 @@ import (
 const START_RUNE = '{'
 const END_RUNE = '}'
 
-func formatTemplate(template string, params map[string]string) string {
+func FormatTemplate(template string, params map[string]string) string {
 	if !strings.ContainsRune(template, START_RUNE) {
 		return template
 	}

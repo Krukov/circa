@@ -1,20 +1,19 @@
-package handler
+package resolver
 
 import (
 	"errors"
 	"strings"
 )
 
-type ruleName string
-
 type node struct {
-	name      string
+	name      string           // root , *  or url prefix
 	children  map[string]*node // {"users": n1, "products": n2}
 	params    []string
-	rule      ruleName
-	downRules []ruleName
+	rule      string
+	downRules []string
 }
 
+// TODO: refactor names to -> Err<Name>
 var NotFound = errors.New("noRoute")
 var DownRuleError = errors.New("downRule")
 
@@ -22,16 +21,16 @@ const STAR = "*"
 const PLACEHOLDER = "."
 
 func newTrie() *node {
-	return &node{name: "root", children: map[string]*node{}, params: []string{}, downRules: []ruleName{}}
+	return &node{name: "root", children: map[string]*node{}, params: []string{}, downRules: []string{}}
 }
 
-func (t *node) addRule(rulePath string, rule ruleName) {
+func (t *node) addRule(rulePath string, rule string) {
 	rulePath = strings.Trim(rulePath, "/")
 	sPath := strings.Split(rulePath, "/")
 	t.addPrefixs(sPath, rule)
 }
 
-func (t *node) setDownRule(rule ruleName) {
+func (t *node) setDownRule(rule string) {
 	var _in bool
 	for _, downRule := range t.downRules {
 		if rule == downRule {
@@ -46,7 +45,7 @@ func (t *node) setDownRule(rule ruleName) {
 	}
 }
 
-func (t *node) addPrefixs(prefixs []string, rule ruleName) {
+func (t *node) addPrefixs(prefixs []string, rule string) {
 	if len(prefixs) == 0 {
 		return
 	}
@@ -68,7 +67,7 @@ func (t *node) addPrefix(prefix string) *node {
 	name, param := getNameStar(prefix) // like {id} -> PLACEHOLDER, id ; or test -> test, nil
 	children, ok := t.children[name]
 	if !ok {
-		children = &node{name: prefix, children: map[string]*node{}, params: []string{}, downRules: []ruleName{}}
+		children = &node{name: prefix, children: map[string]*node{}, params: []string{}, downRules: []string{}}
 		children.downRules = t.downRules[:]
 		t.children[name] = children
 	}
@@ -90,7 +89,7 @@ func getNameStar(prefix string) (string, string) {
 	return prefix, ""
 }
 
-func (t *node) resolve(path string) (names []ruleName, params map[string]string, err error) {
+func (t *node) resolve(path string) (names []string, params map[string]string, err error) {
 	var n *node
 	path = strings.Trim(path, "/")
 	sPath := strings.Split(path, "/")

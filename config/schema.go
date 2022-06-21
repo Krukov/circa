@@ -1,15 +1,18 @@
 package config
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 type GlobalOptions struct {
-	Target  string `json:"host"`
-	Timeout string `json:"timeout"`
+	Target         string   `json:"host"`
+	Timeout        Duration `json:"timeout"`
+	DefaultStorage string   `json:"default_storage"`
 }
 
 type Rule struct {
 	Key  string `json:"key"`
-	Type string `json:"type"`
+	Kind string `json:"kind"`
 
 	Timeout string   `json:"timeout"`
 	Methods []string `json:"methods"`

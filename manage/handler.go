@@ -235,3 +235,112 @@ func writeError(w http.ResponseWriter, err *errorResponse) {
 	w.WriteHeader(http.StatusBadRequest)
 	_ = json.NewEncoder(w).Encode(err)
 }
+
+
+
+// func (r *Runner) AddHandlers(route string, handlers ...*handler) []*HandlerInfo {
+// 	r.lock.Lock()
+// 	for _, h := range handlers {
+// 		if _, ok := r.handlers[ruleName(route)]; !ok {
+// 			r.handlers[ruleName(route)] = map[uuid.UUID]*handler{}
+// 		}
+// 		r.handlers[ruleName(route)][h.id] = h
+// 	}
+// 	r.router.addRule(route, ruleName(route))
+// 	r.lock.Unlock()
+// 	handlerItems := []*HandlerInfo{}
+// 	for _, h := range handlers {
+// 		handlersGauge.WithLabelValues(h.rule.String(), route).Inc()
+// 		handlerItems = append(handlerItems, &HandlerInfo{
+// 			ID:      h.id,
+// 			Path:    route,
+// 			Key:     h.keyTemplate,
+// 			Rule:    h.rule.String(),
+// 			Storage: h.storage.String(),
+// 			Methods: h.getMethods(),
+// 		})
+// 	}
+// 	return handlerItems
+// }
+
+// type HandlerInfo struct {
+// 	ID      uuid.UUID
+// 	Path    string
+// 	Key     string
+// 	Rule    string
+// 	Storage string
+// 	Methods []string
+// }
+
+// func (r *Runner) GetHandlers() []*HandlerInfo {
+// 	handlerItems := []*HandlerInfo{}
+// 	r.lock.RLock()
+// 	defer r.lock.RUnlock()
+// 	for path, handlers := range r.handlers {
+// 		for _, h := range handlers {
+// 			handlerItems = append(handlerItems, &HandlerInfo{
+// 				ID:      h.id,
+// 				Path:    string(path),
+// 				Key:     h.keyTemplate,
+// 				Rule:    h.rule.String(),
+// 				Storage: h.storage.String(),
+// 				Methods: h.getMethods(),
+// 			})
+// 		}
+// 	}
+// 	return handlerItems
+// }
+
+// func (r *Runner) GetHandlersFor(path, method string) ([]*HandlerInfo, map[string]string) {
+// 	handlerItems := []*HandlerInfo{}
+// 	r.lock.RLock()
+// 	ruleNames, params, err := r.config.Resolve(path)
+// 	r.lock.RUnlock()
+// 	if err != nil {
+// 		return handlerItems, params
+// 	}
+// 	req := message.Request{Method: method, Path: path, Params: params}
+// 	for _, rule := range ruleNames {
+// 		r.lock.RLock()
+// 		handlers_, ok := r.handlers[rule]
+// 		r.lock.RUnlock()
+// 		req.Route = string(rule)
+// 		if !ok {
+// 			continue
+// 		}
+// 		for _, h := range handlers_ {
+// 			if _, ok := h.methods[strings.ToLower(method)]; ok {
+// 				handlerItems = append(handlerItems, &HandlerInfo{
+// 					ID:      h.id,
+// 					Path:    string(rule),
+// 					Key:     h.makeKey(&req),
+// 					Rule:    h.rule.String(),
+// 					Storage: h.storage.String(),
+// 					Methods: h.getMethods(),
+// 				})
+// 			}
+// 		}
+// 	}
+// 	return handlerItems, params
+// }
+
+// func (r *Runner) GetHandlerByID(id uuid.UUID) *HandlerInfo {
+// 	var ok bool
+// 	var h *handler
+// 	r.lock.RLock()
+// 	defer r.lock.RUnlock()
+// 	for rule, handlers := range r.handlers {
+// 		h, ok = handlers[id]
+// 		if ok {
+// 			return &HandlerInfo{
+// 				ID:      h.id,
+// 				Path:    string(rule),
+// 				Key:     h.keyTemplate,
+// 				Rule:    h.rule.String(),
+// 				Storage: h.storage.String(),
+// 				Methods: h.getMethods(),
+// 			}
+// 		}
+// 	}
+// 	return nil
+// }

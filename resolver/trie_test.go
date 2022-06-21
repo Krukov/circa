@@ -1,4 +1,4 @@
-package handler
+package resolver
 
 import (
 	"reflect"
@@ -30,30 +30,30 @@ func Test_node_getRoute(t1 *testing.T) {
 	tests := []struct {
 		name       string
 		gotPath    string
-		wantNames  []ruleName
+		wantNames  []string
 		wantParams map[string]string
 	}{
-		{"user list", "/user", []ruleName{"USER_LIST"}, map[string]string{}},
-		{"user list", "/user/", []ruleName{"USER_LIST"}, map[string]string{}},
-		{"user list", "user/", []ruleName{"USER_LIST"}, map[string]string{}},
+		{"user list", "/user", []string{"USER_LIST"}, map[string]string{}},
+		{"user list", "/user/", []string{"USER_LIST"}, map[string]string{}},
+		{"user list", "user/", []string{"USER_LIST"}, map[string]string{}},
 
-		{"user detail", "/user/1", []ruleName{"USER_DETAIL"}, map[string]string{"id": "1"}},
-		{"user detail", "/user/test/", []ruleName{"USER_DETAIL"}, map[string]string{"id": "test"}},
+		{"user detail", "/user/1", []string{"USER_DETAIL"}, map[string]string{"id": "1"}},
+		{"user detail", "/user/test/", []string{"USER_DETAIL"}, map[string]string{"id": "test"}},
 
-		{"user me", "/user/me/", []ruleName{"USER_ME"}, map[string]string{}},
-		{"user me", "/user/me", []ruleName{"USER_ME"}, map[string]string{}},
+		{"user me", "/user/me/", []string{"USER_ME"}, map[string]string{}},
+		{"user me", "/user/me", []string{"USER_ME"}, map[string]string{}},
 
-		{"user top", "/user/1/top", []ruleName{"USER_TOP_LIST"}, map[string]string{"id": "1"}},
-		{"user top", "/user/me/top", []ruleName{"USER_TOP_LIST"}, map[string]string{"id": "me"}},
-		{"user top list", "/user/1/top/1", []ruleName{"USER_TOP_ITEM"}, map[string]string{"id": "1", "item": "1"}},
+		{"user top", "/user/1/top", []string{"USER_TOP_LIST"}, map[string]string{"id": "1"}},
+		{"user top", "/user/me/top", []string{"USER_TOP_LIST"}, map[string]string{"id": "me"}},
+		{"user top list", "/user/1/top/1", []string{"USER_TOP_ITEM"}, map[string]string{"id": "1", "item": "1"}},
 
-		{"posts info", "/posts/1/info", []ruleName{"POSTS_DETAIL_INFO", "POSTS_PASS", "POSTS_PASS2"}, map[string]string{"id": "1"}},
-		{"posts last", "/posts/last/1", []ruleName{"POSTS_LAST", "POSTS_PASS"}, map[string]string{"id": "1"}},
-		{"posts detail", "/posts/1", []ruleName{"POSTS_DETAIL", "POSTS_PASS", "POSTS_PASS2"}, map[string]string{"id": "1"}},
+		{"posts info", "/posts/1/info", []string{"POSTS_DETAIL_INFO", "POSTS_PASS", "POSTS_PASS2"}, map[string]string{"id": "1"}},
+		{"posts last", "/posts/last/1", []string{"POSTS_LAST", "POSTS_PASS"}, map[string]string{"id": "1"}},
+		{"posts detail", "/posts/1", []string{"POSTS_DETAIL", "POSTS_PASS", "POSTS_PASS2"}, map[string]string{"id": "1"}},
 
-		{"posts pass", "/posts/1/inf/some/here", []ruleName{"POSTS_PASS", "POSTS_PASS2"}, map[string]string{}},
-		{"posts pass 2", "/posts/1/inf", []ruleName{"POSTS_PASS", "POSTS_PASS2"}, map[string]string{}},
-		{"posts pass 3", "/posts/", []ruleName{"POSTS_PASS"}, map[string]string{}},
+		{"posts pass", "/posts/1/inf/some/here", []string{"POSTS_PASS", "POSTS_PASS2"}, map[string]string{}},
+		{"posts pass 2", "/posts/1/inf", []string{"POSTS_PASS", "POSTS_PASS2"}, map[string]string{}},
+		{"posts pass 3", "/posts/", []string{"POSTS_PASS"}, map[string]string{}},
 	}
 
 	for _, tt := range tests {

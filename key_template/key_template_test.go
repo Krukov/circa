@@ -1,8 +1,8 @@
-package handler
+package key_template
 
 import "testing"
 
-func Test_formatTemplate(t *testing.T) {
+func Test_FormatTemplate(t *testing.T) {
 	type args struct {
 		template string
 		params   map[string]string
@@ -25,7 +25,7 @@ func Test_formatTemplate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := formatTemplate(tt.args.template, tt.args.params); got != tt.want {
+			if got := FormatTemplate(tt.args.template, tt.args.params); got != tt.want {
 				t.Errorf("formatTemplate() = %v, want %v", got, tt.want)
 			}
 		})

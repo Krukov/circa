@@ -5,7 +5,7 @@
   |                                            |
 ```
 
-Fast, smart and simple caching proxy 
+Fast, smart and simple car side caching proxy
  - Simple configuration with json config or managment api
  - Cache stampede problem solution
  - Ratelimits
@@ -18,7 +18,7 @@ Fast, smart and simple caching proxy
 Why
 ===
 
-In microservice world you may need cache for sevice communication. Ussualy developers implement this cache in microservice itself but it is very common issue. What if we can just user cache proxy in front of microservice for that? The same with Circut Breaker, RequestID generation and logging, rate limits and so on. Of cource you can try to configure nginx for that but not easy to configure it for this proposes and you may need to know hot to write in lua script. `Circa` need only a simple json config with rulls for you enpdoints that helps you to do all that staff from the box in 5 minutes 
+In microservice world you may need cache for service communication. Usually developers implement this cache in microservice itself but it is very common issue. What if we can just user cache proxy in front of microservice for that? The same with Circuit Breaker, RequestID generation and logging, rate limits and so on. You can try to configure nginx as side car for that, but it is not easy to configure and you may need to know hot to write in lua script. `Circa` need only a simple json config with rules for you enpdoints that helps you to do all that staff from the box in 5 minutes. Also it can modify requests, glue responces, 
 
 Configuration
 =============
@@ -181,10 +181,20 @@ Specify target host and timeout for forwarding requests
 ```
 Will proxy all get methods as post request to the https://google.com/posts/
 
+12. Glue
+```json
+{
+  "type": "json",
+  "paths": ["/posts", "/articles"]
+}
+
 TODO:
  - circuit-breaker []
- - rate-limit with a bucket
+ - rate-limit with a sliding window
  - hot cache ?
  - hot reload with config change 
  - config flush
  - unix socket as target
+
+ConfigRepo (store a config) -> Config (control a rules storages and sync configRepo) -> Runner 
+Request -> Resolver (route -> rules) -> Rule -> Handler  -> Requester -> Response

@@ -1,11 +1,10 @@
 package main
 
 import (
-	"circa/manage"
+	"circa/resolver"
 	"circa/storages"
 	"context"
 	"flag"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -15,16 +14,16 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"circa/config"
-	"circa/handler"
+	"circa/runner"
 	"circa/server"
 )
 
 func main() {
 	debug := flag.Bool("debug", false, "dev mode")
 	jsonLogs := flag.Bool("json-out", false, "json logging")
-	configFilePath := flag.String("config", "./circa.json", "Config path")
+	configPath := flag.String("config", "./circa.json", "Config")
 	port := flag.String("port", "8000", "Listen port")
-	managePort := flag.String("manage-port", "", "Listen port")
+	// managePort := flag.String("manage-port", "", "Listen port")
 	flag.Parse()
 
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)
@@ -35,33 +34,34 @@ func main() {
 	if !*jsonLogs {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
-	handler.RegisterMetrics()
+	runner.RegisterMetrics()
 	server.RegisterMetrics()
 	storages.RegisterMetrics()
 
 	figure.NewColorFigure("| CIRCA |", "cyberlarge", "yellow", true).Print()
+	Resolver := resolver.NewResolver()
 
-	runner := handler.NewRunner(server.MakeRequest)
-	log.Info().Str("config", *configFilePath).Msg("Loading... ")
-	err := config.AdjustJsonConfig(runner, *configFilePath)
+	log.Info().Str("config", *configPath).Msg("Loading... ")
+	conf, err := config.NewConfigFromDSN(*configPath, Resolver)
 	if err != nil {
-		log.Fatal().Err(err).Msg("Can't load config file")
+		log.Fatal().Err(err).Msg("Can't load config")
 		return
 	}
+	Runner := runner.NewRunner(conf)
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-	ctx, cancel := context.WithCancel(context.Background())
+	_, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	circa := server.Run(cancel, runner, *port)
-	var manageSrv *http.Server
-	if *managePort != "" {
-		manageSrv = manage.Run(runner, *managePort)
-	}
+	circa := server.Run(cancel, Runner, *port)
+	// var manageSrv *http.Server
+	// if *managePort != "" {
+	// 	manageSrv = manage.Run(runner, *managePort)
+	// }
 	<-done
-	if manageSrv != nil {
-		manageSrv.Shutdown(ctx)
-	}
+	// if manageSrv != nil {
+	// 	manageSrv.Shutdown(ctx)
+	// }
 	circa.Shutdown()
 }

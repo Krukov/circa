@@ -5,51 +5,51 @@
   "rules": {
     "/posts/{id}": [
       {
-        "type": "idempotency",
+        "kind": "idempotency",
         "key": "post-ide-{R:body|hash}",
         "ttl": "10s",
         "methods": ["POST"]
       },
       {
         "key": "posts-{id}:key",
-        "type": "early",
+        "kind": "early",
         "storage": "mem",
         "early_ttl": "1m",
         "ttl": "10m"
       },
       {
-        "type": "invalidate",
+        "kind": "invalidate",
         "methods": ["POST", "DELETE", "PUT", "PATCH"],
         "key": "posts-{id}:key"
       }
     ],
     "/posts/3": [
       {
-        "type": "skip",
+        "kind": "skip",
         "methods": ["GET", "POST", "DELETE", "PUT", "PATCH"]
       }
     ],
     "hit/posts": [
       {
-        "type": "hit",
+        "kind": "hit",
         "ttl": "10m",
         "key": "posts:hit:key",
         "hits": 100,
         "update_after": 50
       },
       {
-        "type": "proxy",
+        "kind": "proxy",
         "path": "/posts/"
       }
     ],
     "/*": [
       {
-        "type": "request_id",
+        "kind": "request_id",
         "methods": ["GET", "POST", "DELETE", "PUT", "PATCH"],
         "skip_return": true
       },
       {
-        "type": "retry",
+        "kind": "retry",
         "methods": ["GET", "PATCH"],
         "backoff": "1s",
         "count": 2
@@ -58,7 +58,7 @@
     ]
   },
   "options": {
-    "host": "http://localhost:8888",
+    "host": "http://localhost:8000",
     "timeout": "1m30s"
   }
 }
