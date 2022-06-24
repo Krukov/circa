@@ -13,7 +13,7 @@ var headersForbiddenToPass = map[string]bool{"Accept-Encoding": true, "Connectio
 
 // var httpClient = fasthttp.Client{ReadTimeout: time.Second * 5, MaxConnsPerHost: 10} make it with closure
 
-func MakeRequest(request *message.Request) (*message.Response, error) {
+func makeRequest(request *message.Request) (*message.Response, error) {
 	start := time.Now()
 	logger := request.Logger.With().
 		Str("host", request.Host).
@@ -32,7 +32,7 @@ func MakeRequest(request *message.Request) (*message.Response, error) {
 	}()
 
 	request_.Header.SetMethod(request.Method)
-	request_.SetRequestURI(request.Host + request.Path)
+	request_.SetRequestURI(request.Host + request.FullPath)
 	request_.SetBody(request.Body)
 	for header := range request.Headers {
 		if !headersForbiddenToPass[header] {

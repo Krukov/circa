@@ -6,7 +6,7 @@ import (
 )
 
 func createRouter() *node {
-	t := newTrie()
+	t := newTrie("")
 	t.addRule("/", "ROOT")
 	t.addRule("user/me", "USER_ME")
 	t.addRule("user/{id}", "USER_DETAIL")
@@ -47,13 +47,13 @@ func Test_node_getRoute(t1 *testing.T) {
 		{"user top", "/user/me/top", []string{"USER_TOP_LIST"}, map[string]string{"id": "me"}},
 		{"user top list", "/user/1/top/1", []string{"USER_TOP_ITEM"}, map[string]string{"id": "1", "item": "1"}},
 
-		{"posts info", "/posts/1/info", []string{"POSTS_DETAIL_INFO", "POSTS_PASS", "POSTS_PASS2"}, map[string]string{"id": "1"}},
-		{"posts last", "/posts/last/1", []string{"POSTS_LAST", "POSTS_PASS"}, map[string]string{"id": "1"}},
-		{"posts detail", "/posts/1", []string{"POSTS_DETAIL", "POSTS_PASS", "POSTS_PASS2"}, map[string]string{"id": "1"}},
+		{"posts info", "/posts/1/info", []string{"POSTS_PASS", "POSTS_PASS2", "POSTS_DETAIL_INFO"}, map[string]string{"id": "1"}},
+		{"posts info", "/posts/info/1", []string{"POSTS_PASS", "POSTS_DETAIL_INFO2"}, map[string]string{"id": "1"}},
+		{"posts last", "/posts/last/1", []string{"POSTS_PASS", "POSTS_LAST"}, map[string]string{"id": "1"}},
+		{"posts detail", "/posts/1", []string{"POSTS_PASS", "POSTS_DETAIL"}, map[string]string{"id": "1"}},
 
 		{"posts pass", "/posts/1/inf/some/here", []string{"POSTS_PASS", "POSTS_PASS2"}, map[string]string{}},
 		{"posts pass 2", "/posts/1/inf", []string{"POSTS_PASS", "POSTS_PASS2"}, map[string]string{}},
-		{"posts pass 3", "/posts/", []string{"POSTS_PASS"}, map[string]string{}},
 	}
 
 	for _, tt := range tests {
@@ -85,6 +85,7 @@ func Test_node_getRoute_Error(t1 *testing.T) {
 	}{
 
 		{"not find", "/user/top/me", "", map[string]string{}},
+		{"not find", "/posts/", "", map[string]string{}},
 		{"not find", "/use/me", "", map[string]string{}},
 		{"not find", "/user/1/1", "", map[string]string{}},
 		{"not find", "/user/1/2/top/", "", map[string]string{}},
@@ -93,9 +94,9 @@ func Test_node_getRoute_Error(t1 *testing.T) {
 
 	for _, tt := range tests {
 		t1.Run(tt.name, func(t1 *testing.T) {
-			_, _, err := t.resolve(tt.gotPath)
+			names, _, err := t.resolve(tt.gotPath)
 			if err == nil {
-				t1.Errorf("resolve() error = %v, wantErr", err)
+				t1.Errorf("resolve() error = %v names=%v, wantErr", err, names)
 			}
 		})
 	}

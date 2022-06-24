@@ -50,7 +50,8 @@ func TestCacheRule_Process(t *testing.T) {
 		resp    *message.Response
 		wantErr bool
 	}{
-		{"simple", &message.Request{Method: "GET"}, "cached", &message.Response{Body: []byte(`mock`), Status: 200, CachedKey: "key"}, false},
+		{"simple", &message.Request{Method: "GET"}, "cached", &message.Response{Body: []byte(`mock`), Status: 200, 
+		}, false},
 		{"no cache", &message.Request{Method: "GET"}, "", &message.Response{Body: []byte(`data`), Status: 200}, false},
 	}
 

@@ -14,10 +14,6 @@ type EarlyCacheRule struct {
 	EarlyTTL time.Duration
 }
 
-func (r *EarlyCacheRule) String() string {
-	return "early"
-}
-
 func (r *EarlyCacheRule) Process(request *message.Request, key string, storage storages.Storage, call message.Requester) (resp *message.Response, hit bool, err error) {
 	resp, err = storage.Get(key)
 	if err == nil {
@@ -28,7 +24,9 @@ func (r *EarlyCacheRule) Process(request *message.Request, key string, storage s
 				go r.callAndSet(request, key, storage, call)
 			}
 		}
-		resp.CachedKey = key
+		resp.SetHeader("X-Circa-Cache-Key", key)
+		resp.SetHeader("X-Circa-Cache-Storage", storage.String())
+		request.Logger = request.Logger.With().Str("cache_key", key).Logger()
 		hit = true
 		return
 	} else {

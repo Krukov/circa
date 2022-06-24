@@ -1,6 +1,7 @@
 package message
 
 import (
+	"strings"
 	"sync"
 	"time"
 
@@ -14,7 +15,6 @@ type Response struct {
 	Body      []byte
 	headers   map[string]string
 	hmutex    sync.RWMutex
-	CachedKey string
 }
 
 func NewResponse(status int, body []byte, headers map[string]string) *Response {
@@ -38,12 +38,14 @@ func (r *Response) SetHeader(name string, value string) {
 	r.headers[name] = value
 }
 
-func (r *Response) GetHeaders() map[string]string {
-	res := make(map[string]string)
+func (r *Response) GetHeaders(all bool) map[string]string {
+	res := map[string]string{}
 	r.hmutex.RLock()
 	defer r.hmutex.RUnlock()
 	for k, v := range r.headers {
-		res[k] = v
+		if all || !strings.HasPrefix(k, "X-Circa") {
+			res[k] = v
+		}
 	}
 	return res
 }
@@ -55,16 +57,19 @@ func (r *Response) GetHeader(name string) string {
 }
 
 type Request struct {
-	Method  string
-	Path    string
-	Route   string
-	Headers map[string]string
-	Query   map[string][]string
+	Method   string
+	Path     string
+	QueryStr string
+	Host     string
+	FullPath string
 
-	Host string
 	Body []byte
 
+	Route  string
 	Params map[string]string
+
+	Query   map[string][]string
+	Headers map[string]string
 
 	Timeout time.Duration
 	Skip    bool

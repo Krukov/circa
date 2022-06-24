@@ -189,12 +189,15 @@ Will proxy all get methods as post request to the https://google.com/posts/
 }
 
 TODO:
+ - unix socket as target
+ - proxy fast with no rules
+ - glue
+ - proxy filebody
  - circuit-breaker []
  - rate-limit with a sliding window
  - hot cache ?
  - hot reload with config change 
  - config flush
- - unix socket as target
 
 ConfigRepo (store a config) -> Config (control a rules storages and sync configRepo) -> Runner 
 Request -> Resolver (route -> rules) -> Rule -> Handler  -> Requester -> Response

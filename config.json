@@ -1,6 +1,7 @@
 {
   "storages": {
-    "mem": "redis://localhost/2"
+    "main": "redis://localhost/2",
+    "mem": "mem://"
   },
   "rules": {
     "/posts/{id}": [
@@ -40,6 +41,13 @@
       {
         "kind": "proxy",
         "path": "/posts/"
+      }
+    ],
+    "/static/*" : [
+      {
+        "kind": "cache",
+        "ttl": "1m",
+        "key": "{R:full_path}"
       }
     ],
     "/*": [

@@ -10,15 +10,13 @@ type CacheRule struct {
 	TTL time.Duration
 }
 
-func (r *CacheRule) String() string {
-	return "cache"
-}
-
 func (r *CacheRule) Process(request *message.Request, key string, storage storages.Storage, call message.Requester) (resp *message.Response, hit bool, err error) {
 	resp, err = storage.Get(key)
 	if err == nil {
-		resp.CachedKey = key
 		hit = true
+		resp.SetHeader("X-Circa-Cache-Key", key)
+		resp.SetHeader("X-Circa-Cache-Storage", storage.String())
+		request.Logger = request.Logger.With().Str("cache_key", key).Logger()
 		return
 	} else {
 		err = nil

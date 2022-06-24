@@ -40,13 +40,9 @@ func (r *Runner) Handle(request *message.Request, makeRequest message.Requester)
 		return nil, err
 	}
 	request.Params = params
-
 	for _, rule := range rules {
-
 		request.Route = rule.Route
-
 		if _, ok := rule.Methods[strings.ToLower(request.Method)]; ok {
-			request.Logger.Debug().Msgf("Append rule %s to ", rule.Name, request.Path)
 			makeRequest = r.toCall(makeRequest, rule)
 		}
 	}
@@ -55,10 +51,6 @@ func (r *Runner) Handle(request *message.Request, makeRequest message.Requester)
 		return nil, err
 	}
 	request.Logger = request.Logger.With().Str("status", strconv.Itoa(resp.Status)).Logger()
-	if resp.CachedKey != "" {
-		request.Logger = request.Logger.With().Str("cache_key", resp.CachedKey).Logger()
-		resp.SetHeader("X-Circa-Cache-Key", resp.CachedKey)
-	}
 	return
 }
 
@@ -103,6 +95,8 @@ func (r *Runner) makeKey(request *message.Request, rule *rules.Rule) string {
 		params["H:"+strings.ToLower(hk)] = hv
 	}
 	params["R:path"] = request.Path
+	params["R:query"] = request.QueryStr
+	params["R:full_path"] = request.FullPath
 	params["R:method"] = request.Method
 	params["R:body"] = string(request.Body)
 	return key_template.FormatTemplate(rule.Key, params)

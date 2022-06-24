@@ -11,10 +11,6 @@ type RetryRule struct {
 	Backoff time.Duration
 }
 
-func (r *RetryRule) String() string {
-	return "retry"
-}
-
 func (r *RetryRule) Process(request *message.Request, key string, storage storages.Storage, call message.Requester) (*message.Response, bool, error) {
 	resp, hit, err := simpleCall(request, call)
 	retry := 0

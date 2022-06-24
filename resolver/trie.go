@@ -6,147 +6,121 @@ import (
 )
 
 type node struct {
-	name      string           // root , *  or url prefix
-	children  map[string]*node // {"users": n1, "products": n2}
-	params    []string
-	rule      string
-	downRules []string
+	name         string           // url prefix
+	children     map[string]*node // {"users": n1, "products": n2}
+	placeholders map[string]*node // ["{id}": n1, "{name}": {}]
+	params       []string
+	match        string // match rule for *
+	rule         string
 }
 
-// TODO: refactor names to -> Err<Name>
-var NotFound = errors.New("noRoute")
-var DownRuleError = errors.New("downRule")
-
 const STAR = "*"
-const PLACEHOLDER = "."
 
-func newTrie() *node {
-	return &node{name: "root", children: map[string]*node{}, params: []string{}, downRules: []string{}}
+var ErrNotFound = errors.New("noRoute")
+
+func newTrie(name string) *node {
+	return &node{name: name, children: map[string]*node{}, params: []string{}, placeholders: map[string]*node{}}
 }
 
 func (t *node) addRule(rulePath string, rule string) {
 	rulePath = strings.Trim(rulePath, "/")
 	sPath := strings.Split(rulePath, "/")
-	t.addPrefixs(sPath, rule)
+	t.addNodes(sPath, rule)
 }
 
-func (t *node) setDownRule(rule string) {
-	var _in bool
-	for _, downRule := range t.downRules {
-		if rule == downRule {
-			_in = true
-		}
-	}
-	if !_in {
-		t.downRules = append(t.downRules, rule)
-	}
-	for _, c := range t.children {
-		c.setDownRule(rule)
-	}
-}
-
-func (t *node) addPrefixs(prefixs []string, rule string) {
+func (t *node) addNodes(prefixs []string, rule string) {
 	if len(prefixs) == 0 {
 		return
 	}
-	n := t.addPrefix(prefixs[0])
+	var n *node
+	if prefixs[0] == "*" {
+		t.match = rule
+		n = t
+	} else {
+		n = t.addNode(prefixs[0])
+	}
 
 	if len(prefixs) == 1 {
-		if n.name == STAR {
-			t.setDownRule(rule)
-		} else {
-			n.rule = rule
-		}
+		n.rule = rule
 		return
 	}
-	n.addPrefixs(prefixs[1:], rule)
+	n.addNodes(prefixs[1:], rule)
 }
 
 // Add children to node with prefix
-func (t *node) addPrefix(prefix string) *node {
-	name, param := getNameStar(prefix) // like {id} -> PLACEHOLDER, id ; or test -> test, nil
-	children, ok := t.children[name]
-	if !ok {
-		children = &node{name: prefix, children: map[string]*node{}, params: []string{}, downRules: []string{}}
-		children.downRules = t.downRules[:]
-		t.children[name] = children
+func (t *node) addNode(prefix string) *node {
+	param := getParam(prefix) // like {id} -> id ; or test -> ""
+	if param == "" {
+		children, ok := t.children[prefix]
+		if !ok {
+			children = newTrie(prefix)
+			t.children[prefix] = children
+		}
+		return children
+	} else {
+		placeholder, ok := t.placeholders[param]
+		if !ok {
+			placeholder = newTrie(prefix)
+			placeholder.params = append(placeholder.params, param)
+			t.placeholders[param] = placeholder
+		}
+		return placeholder
 	}
-
-	if param != "" {
-		t.params = append(t.children[name].params, param)
-		t.children[name].params = append(t.children[name].params, param)
-	}
-	return children
 }
 
-func getNameStar(prefix string) (string, string) {
+func getParam(prefix string) string {
 	if len(prefix) == 0 {
-		return prefix, ""
+		return ""
 	}
 	if prefix[0] == '{' && prefix[len(prefix)-1] == '}' {
-		return PLACEHOLDER, prefix[1 : len(prefix)-1]
+		return prefix[1 : len(prefix)-1]
 	}
-	return prefix, ""
+	return ""
 }
 
 func (t *node) resolve(path string) (names []string, params map[string]string, err error) {
-	var n *node
 	path = strings.Trim(path, "/")
 	sPath := strings.Split(path, "/")
-	n, params, err = t.getNode(sPath, map[string]string{})
-
-	if n != nil {
-		if err != DownRuleError && n.rule != "" {
-			names = append(names, n.rule)
-		}
-		names = append(names, n.downRules...)
-		err = nil
-	}
+	names, params, _ = t.walking(sPath, []string{}, map[string]string{})
 	if len(names) == 0 {
-		err = NotFound
+		err = ErrNotFound
 	}
 	return
 }
 
-func (t *node) getNode(path []string, params map[string]string) (*node, map[string]string, error) {
+func (t *node) walking(path []string, rules []string, params map[string]string) ([]string, map[string]string, error) {
+	var err error
 	nameToFind := path[0]
+	if nameToFind == "" {
+		return rules, params, err
+	}
+	if t.match != "" {
+		rules = append(rules, t.match)
+	}
 
 	if children, ok := t.children[nameToFind]; ok {
 		if len(path) == 1 {
-			return children, params, nil
+			if children.match == "" && children.rule != "" {
+				rules = append(rules, children.rule)
+			}
+			return rules, params, nil
 		}
-		resNode, resParams, err := children.getNode(path[1:], params)
+		rules, params, err = children.walking(path[1:], rules, params)
 		if err == nil {
-			return resNode, resParams, err
-		}
-		if err == DownRuleError {
-			return resNode, resParams, err
+			return rules, params, err
 		}
 	}
-
-	if n, ok := t.children[PLACEHOLDER]; ok {
-		for _, param := range t.params {
-			params[param] = nameToFind
+	for param, placeholder := range t.placeholders {
+		params[param] = nameToFind
+		if len(path) == 1 && placeholder.rule != "" {
+			rules = append(rules, placeholder.rule)
+			return rules, params, nil
 		}
-		if len(path) == 1 {
-			return n, params, nil
+		rules, params, err = placeholder.walking(path[1:], rules, params)
+		if err != nil {
+			continue
 		}
-		resNode, resParams, err := n.getNode(path[1:], params)
-
-		if err == nil {
-			return resNode, resParams, err
-		}
-		if err == DownRuleError {
-			return resNode, resParams, err
-		}
+		return rules, params, err
 	}
-
-	if len(t.downRules) > 0 {
-		return t, params, DownRuleError
-	}
-	return nil, params, NotFound
-}
-
-func (t *node) Print() {
-
+	return rules, params, ErrNotFound
 }

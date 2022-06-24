@@ -10,10 +10,6 @@ type IdempotencyRule struct {
 	TTL time.Duration
 }
 
-func (r *IdempotencyRule) String() string {
-	return "idempotency"
-}
-
 func (r *IdempotencyRule) Process(request *message.Request, key string, storage storages.Storage, call message.Requester) (*message.Response, bool, error) {
 	if setted, err := storage.Set(key, &message.Response{}, r.TTL); !setted && err == nil {
 		request.Skip = true

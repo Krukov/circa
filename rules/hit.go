@@ -13,10 +13,6 @@ type HitRule struct {
 	UpdateAfterHits int
 }
 
-func (r *HitRule) String() string {
-	return "hit"
-}
-
 func (r *HitRule) Process(request *message.Request, key string, storage storages.Storage, call message.Requester) (resp *message.Response, hit bool, err error) {
 	hits, err := storage.Incr(key + ":hits")
 	if err != nil {
@@ -35,8 +31,10 @@ func (r *HitRule) Process(request *message.Request, key string, storage storages
 		}
 		resp, err = storage.Get(key)
 		if err == nil {
-			resp.CachedKey = key
+			resp.SetHeader("X-Circa-Cache-Key", key)
+			resp.SetHeader("X-Circa-Cache-Storage", storage.String())
 			resp.SetHeader("X-Circa-Hits-To-Update", strconv.Itoa(r.Hits-hits))
+			request.Logger = request.Logger.With().Str("cache_key", key).Logger()
 			return resp, true, err
 		}
 		return updateCache(request, key, storage, call, r.TTL)

@@ -64,7 +64,7 @@ func (s *Redis) Set(key string, value *message.Response, ttl time.Duration) (boo
 		operationHistogram.WithLabelValues(s.String(), "set").Observe(time.Since(start).Seconds())
 	}()
 	values := map[string]string{}
-	for header, hValue := range value.GetHeaders() {
+	for header, hValue := range value.GetHeaders(false) {
 		values[header] = hValue
 	}
 	values["body"] = string(value.Body)

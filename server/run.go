@@ -26,7 +26,7 @@ func Run(cancel context.CancelFunc, r *runner.Runner, port string) *fasthttp.Ser
 			Logger()
 		request.Logger = logger
 		request.Logger.Info().Msg("-> Request")
-		response, err := r.Handle(request, MakeRequest)
+		response, err := r.Handle(request, makeRequest)
 		if err != nil {
 			if err == resolver.NotFound {
 				responseNotFound(ctx)
@@ -62,11 +62,14 @@ func requestFromHttpRequest(ctx *fasthttp.RequestCtx) *message.Request {
 	ctx.Request.Header.VisitAll(func(key, value []byte) {
 		headers[string(key)] = string(value)
 	})
-	ctx.QueryArgs()
+
 	return &message.Request{
-		Method:  string(ctx.Method()),
-		Path:    string(ctx.Path()),
-		Headers: headers,
-		Body:    ctx.PostBody(),
+		Method:   string(ctx.Method()),
+		Path:     string(ctx.Path()),
+		Headers:  headers,
+		Body:     ctx.PostBody(),
+		QueryStr: string(ctx.URI().QueryString()),
+		FullPath: string(ctx.URI().RequestURI()),
+		// Query: ctx.QueryArgs(),
 	}
 }

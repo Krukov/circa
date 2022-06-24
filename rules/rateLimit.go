@@ -11,10 +11,6 @@ type RateLimitRule struct {
 	Limit int
 }
 
-func (r *RateLimitRule) String() string {
-	return "rate-limit"
-}
-
 func (r *RateLimitRule) Process(request *message.Request, key string, storage storages.Storage, call message.Requester) (*message.Response, bool, error) {
 	count, _ := storage.Incr(key)
 	if count == 1 {

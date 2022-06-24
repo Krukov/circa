@@ -12,10 +12,6 @@ type RequestIDRule struct {
 	HeaderName      string
 }
 
-func (r *RequestIDRule) String() string {
-	return "request_id"
-}
-
 func (r *RequestIDRule) Process(request *message.Request, key string, storage storages.Storage, call message.Requester) (*message.Response, bool, error) {
 	requestID := uuid.NewString()
 	if _, ok := request.Headers[r.HeaderName]; ok {
