@@ -55,6 +55,8 @@ func getRuleProcessorFromOptions(rule Rule) (rules.RuleProcessor, error) {
 		return convertToEarlyCacheRule(rule)
 	case "cache":
 		return convertToCacheRule(rule)
+	case "glue":
+		return convertToGlueRule(rule)
 	case "":
 		return convertToCacheRule(rule)
 	}
@@ -122,6 +124,10 @@ func convertToRequestIDRule(rule Rule) (*rules.RequestIDRule, error) {
 func convertToHitRule(rule Rule) (*rules.HitRule, error) {
 	ttl, err := timeFromString(rule.TTL)
 	return &rules.HitRule{TTL: ttl, Hits: rule.Hits, UpdateAfterHits: rule.UpdateAfterHits}, err
+}
+
+func convertToGlueRule(rule Rule) (*rules.GlueRule, error) {
+	return &rules.GlueRule{Calls: rule.Calls}, nil
 }
 
 func timeFromString(in string) (time.Duration, error) {

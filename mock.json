@@ -6,5 +6,8 @@
     {"id": "4" ,"name": "My"},
     {"id": "5" ,"name": "Name"},
     {"id": "1000000" ,"name": "Second"}
+  ],
+  "post_meta": [
+    {"id": "1", "meta": {"created": "2015-01-01"}}
   ]
 }

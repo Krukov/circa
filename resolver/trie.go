@@ -22,10 +22,9 @@ func newTrie(name string) *node {
 	return &node{name: name, children: map[string]*node{}, params: []string{}, placeholders: map[string]*node{}}
 }
 
-func (t *node) addRule(rulePath string, rule string) {
-	rulePath = strings.Trim(rulePath, "/")
-	sPath := strings.Split(rulePath, "/")
-	t.addNodes(sPath, rule)
+func (t *node) addRule(rulePath string) {
+	sPath := strings.Split(strings.Trim(rulePath, "/"), "/")
+	t.addNodes(sPath, rulePath)
 }
 
 func (t *node) addNodes(prefixs []string, rule string) {
@@ -33,7 +32,7 @@ func (t *node) addNodes(prefixs []string, rule string) {
 		return
 	}
 	var n *node
-	if prefixs[0] == "*" {
+	if prefixs[0] == STAR {
 		t.match = rule
 		n = t
 	} else {
@@ -80,10 +79,10 @@ func getParam(prefix string) string {
 
 func (t *node) resolve(path string) (names []string, params map[string]string, err error) {
 	path = strings.Trim(path, "/")
-	sPath := strings.Split(path, "/")
-	names, params, _ = t.walking(sPath, []string{}, map[string]string{})
+	names, params, _ = t.walking(strings.Split(path, "/"), names, map[string]string{})
 	if len(names) == 0 {
 		err = ErrNotFound
+		return
 	}
 	return
 }
@@ -100,7 +99,7 @@ func (t *node) walking(path []string, rules []string, params map[string]string) 
 
 	if children, ok := t.children[nameToFind]; ok {
 		if len(path) == 1 {
-			if children.match == "" && children.rule != "" {
+			if children.rule != "" {
 				rules = append(rules, children.rule)
 			}
 			return rules, params, nil

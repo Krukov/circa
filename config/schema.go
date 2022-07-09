@@ -5,14 +5,14 @@ import (
 )
 
 type GlobalOptions struct {
-	Target         string   `json:"host"`
+	Target         string   `json:"target"`
 	Timeout        Duration `json:"timeout"`
 	DefaultStorage string   `json:"default_storage"`
 }
 
 type Rule struct {
-	Key  string `json:"key"`
 	Kind string `json:"kind"`
+	Key  string `json:"key"`
 
 	Timeout string   `json:"timeout"`
 	Methods []string `json:"methods"`
@@ -35,6 +35,8 @@ type Rule struct {
 	Target string `json:"target"`
 	Path   string `json:"path"`
 	Method string `json:"method"`
+
+	Calls map[string]string `json:"calls"`
 }
 
 type config struct {

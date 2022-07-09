@@ -6,22 +6,34 @@
   "rules": {
     "/posts/{id}": [
       {
+        "kind": "glue",
+        "model": "object",
+        "calls": {
+          "post_main": "/posts/{id}",
+          "post_meta": "/post_meta/{id}"
+        }
+      },
+      {
+        "kind": "invalidate",
+        "methods": ["DELETE", "PUT", "PATCH"],
+        "key": "posts-{id}:key"
+      },
+      {
+        "kind": "invalidate",
+        "methods": ["DELETE", "PUT", "PATCH"],
+        "key": "posts:key"
+      }
+    ],
+    "/posts/": [
+      {
+        "key": "posts:key:{R:query}",
+        "ttl": "10m"
+      },
+      {
         "kind": "idempotency",
         "key": "post-ide-{R:body|hash}",
         "ttl": "10s",
         "methods": ["POST"]
-      },
-      {
-        "key": "posts-{id}:key",
-        "kind": "early",
-        "storage": "mem",
-        "early_ttl": "1m",
-        "ttl": "10m"
-      },
-      {
-        "kind": "invalidate",
-        "methods": ["POST", "DELETE", "PUT", "PATCH"],
-        "key": "posts-{id}:key"
       }
     ],
     "/posts/3": [
@@ -49,24 +61,11 @@
         "ttl": "1m",
         "key": "{R:full_path}"
       }
-    ],
-    "/*": [
-      {
-        "kind": "request_id",
-        "methods": ["GET", "POST", "DELETE", "PUT", "PATCH"],
-        "skip_return": true
-      },
-      {
-        "kind": "retry",
-        "methods": ["GET", "PATCH"],
-        "backoff": "1s",
-        "count": 2
-      }
-
     ]
   },
   "options": {
-    "host": "http://localhost:8000",
-    "timeout": "1m30s"
+    "target": "http://localhost:8888",
+    "timeout": "1m30s",
+    "default_storage": "main"
   }
 }

@@ -11,10 +11,10 @@ import (
 type Requester func(*Request) (*Response, error)
 
 type Response struct {
-	Status    int
-	Body      []byte
-	headers   map[string]string
-	hmutex    sync.RWMutex
+	Status  int
+	Body    []byte
+	headers map[string]string
+	hmutex  sync.RWMutex
 }
 
 func NewResponse(status int, body []byte, headers map[string]string) *Response {

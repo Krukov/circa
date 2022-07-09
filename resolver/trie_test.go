@@ -7,20 +7,20 @@ import (
 
 func createRouter() *node {
 	t := newTrie("")
-	t.addRule("/", "ROOT")
-	t.addRule("user/me", "USER_ME")
-	t.addRule("user/{id}", "USER_DETAIL")
-	t.addRule("user/{id}/top", "USER_TOP_LIST")
-	t.addRule("user/{id}/top/{item}", "USER_TOP_ITEM")
-	t.addRule("/user/", "USER_LIST")
+	t.addRule("/",)
+	t.addRule("user/me")
+	t.addRule("user/{id}")
+	t.addRule("user/{id}/top")
+	t.addRule("user/{id}/top/{item}")
+	t.addRule("/user/")
 
-	t.addRule("posts/last/{id}", "POSTS_LAST")
-	t.addRule("posts/*", "POSTS_PASS")
-	t.addRule("posts/{id}/*", "POSTS_PASS2")
-	t.addRule("posts/{id}/*", "POSTS_PASS2")
-	t.addRule("posts/{id}", "POSTS_DETAIL")
-	t.addRule("posts/{id}/info", "POSTS_DETAIL_INFO")
-	t.addRule("posts/info/{id}", "POSTS_DETAIL_INFO2")
+	t.addRule("posts/last/{id}")
+	t.addRule("posts/*")
+	t.addRule("posts/{id}/*")
+	t.addRule("posts/{id}/*")
+	t.addRule("posts/{id}")
+	t.addRule("posts/{id}/info")
+	t.addRule("posts/info/{id}")
 	return t
 }
 
@@ -33,27 +33,27 @@ func Test_node_getRoute(t1 *testing.T) {
 		wantNames  []string
 		wantParams map[string]string
 	}{
-		{"user list", "/user", []string{"USER_LIST"}, map[string]string{}},
-		{"user list", "/user/", []string{"USER_LIST"}, map[string]string{}},
-		{"user list", "user/", []string{"USER_LIST"}, map[string]string{}},
+		{"user list", "/user", []string{"/user/"}, map[string]string{}},
+		{"user list", "/user/", []string{"/user/"}, map[string]string{}},
+		{"user list", "user/", []string{"/user/"}, map[string]string{}},
 
-		{"user detail", "/user/1", []string{"USER_DETAIL"}, map[string]string{"id": "1"}},
-		{"user detail", "/user/test/", []string{"USER_DETAIL"}, map[string]string{"id": "test"}},
+		{"user detail", "/user/1", []string{"user/{id}"}, map[string]string{"id": "1"}},
+		{"user detail", "/user/test/", []string{"user/{id}"}, map[string]string{"id": "test"}},
 
-		{"user me", "/user/me/", []string{"USER_ME"}, map[string]string{}},
-		{"user me", "/user/me", []string{"USER_ME"}, map[string]string{}},
+		{"user me", "/user/me/", []string{"user/me"}, map[string]string{}},
+		{"user me", "/user/me", []string{"user/me"}, map[string]string{}},
 
-		{"user top", "/user/1/top", []string{"USER_TOP_LIST"}, map[string]string{"id": "1"}},
-		{"user top", "/user/me/top", []string{"USER_TOP_LIST"}, map[string]string{"id": "me"}},
-		{"user top list", "/user/1/top/1", []string{"USER_TOP_ITEM"}, map[string]string{"id": "1", "item": "1"}},
+		{"user top", "/user/1/top", []string{"user/{id}/top"}, map[string]string{"id": "1"}},
+		{"user top", "/user/me/top", []string{"user/{id}/top"}, map[string]string{"id": "me"}},
+		{"user top list", "/user/1/top/1", []string{"user/{id}/top/{item}"}, map[string]string{"id": "1", "item": "1"}},
 
-		{"posts info", "/posts/1/info", []string{"POSTS_PASS", "POSTS_PASS2", "POSTS_DETAIL_INFO"}, map[string]string{"id": "1"}},
-		{"posts info", "/posts/info/1", []string{"POSTS_PASS", "POSTS_DETAIL_INFO2"}, map[string]string{"id": "1"}},
-		{"posts last", "/posts/last/1", []string{"POSTS_PASS", "POSTS_LAST"}, map[string]string{"id": "1"}},
-		{"posts detail", "/posts/1", []string{"POSTS_PASS", "POSTS_DETAIL"}, map[string]string{"id": "1"}},
+		{"posts info", "/posts/1/info", []string{"posts/*", "posts/{id}/*", "posts/{id}/info"}, map[string]string{"id": "1"}},
+		{"posts info", "/posts/info/1", []string{"posts/*", "posts/info/{id}"}, map[string]string{"id": "1"}},
+		{"posts last", "/posts/last/1", []string{"posts/*", "posts/last/{id}"}, map[string]string{"id": "1"}},
+		{"posts detail", "/posts/1", []string{"posts/*", "posts/{id}"}, map[string]string{"id": "1"}},
 
-		{"posts pass", "/posts/1/inf/some/here", []string{"POSTS_PASS", "POSTS_PASS2"}, map[string]string{}},
-		{"posts pass 2", "/posts/1/inf", []string{"POSTS_PASS", "POSTS_PASS2"}, map[string]string{}},
+		{"posts pass", "/posts/1/inf/some/here", []string{"posts/*", "posts/{id}/*"}, map[string]string{}},
+		{"posts pass 2", "/posts/1/inf", []string{"posts/*", "posts/{id}/*"}, map[string]string{}},
 	}
 
 	for _, tt := range tests {

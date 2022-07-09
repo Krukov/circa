@@ -44,6 +44,54 @@ type Config struct {
 	lock *sync.RWMutex
 }
 
+func (c *Config) Init() error {
+	rules, err := c.getRules()
+	if err != nil {
+		return err
+	}
+	for _, rule := range rules {
+		c.resolver.Add(rule)
+	}
+	return nil
+}
+
+func (c *Config) getRules() ([]*rules.Rule, error) {
+	routes, err := c.repository.GetRoutes()
+	if err != nil {
+		return nil, err
+	}
+	var storage storages.Storage
+	var ok bool
+	defaultStorageName, err := c.repository.GetDefaultStorage()
+	if err != nil {
+		return nil, err
+	}
+	defaultStorage, ok := c.storages[defaultStorageName]
+	if !ok {
+		return nil, errors.New("wrong default Storage setup")
+	}
+	returnRules := []*rules.Rule{}
+
+	for _, route := range routes {
+		rules, err := c.repository.GetRules(route)
+		if err != nil {
+			return nil, err
+		}
+		for _, ruleOptions := range rules {
+			storage, ok = c.storages[ruleOptions.Storage]
+			if !ok {
+				storage = defaultStorage
+			}
+			rule, err := getRuleFromOptions(ruleOptions, storage, route)
+			if err != nil {
+				return nil, err
+			}
+			returnRules = append(returnRules, rule)
+		}
+	}
+	return returnRules, nil
+}
+
 func (c *Config) Resolve(path string) (rules []*rules.Rule, params map[string]string, err error) {
 	return c.resolver.Resolve(path)
 }
@@ -83,6 +131,14 @@ func (c *Config) GetTimeout() (time.Duration, error) {
 	return timeout, nil
 }
 
+func (c *Config) GetStorages() (map[string]string, error) {
+	return c.repository.GetStorages()
+}
+
+func (c *Config) GetRoutes() ([]*rules.Rule, error) {
+	return c.getRules()
+}
+
 func NewConfigFromDSN(dsn string, resolver *resolver.Resolver) (*Config, error) {
 	repo, err := newFileConfig(dsn)
 	if err != nil {
@@ -101,45 +157,11 @@ func NewConfigFromDSN(dsn string, resolver *resolver.Resolver) (*Config, error) 
 		}
 		log.Info().Msgf("Configured storage '%v' with dns '%v'", name, DSN)
 	}
-
-	// defRequest := &message.Request{Host: c.Options.Target, Timeout: timeout} // Move to runner
-	routes, err := repo.GetRoutes()
-	if err != nil {
-		return nil, err
-	}
-	var storage storages.Storage
-	var ok bool
-	defaultStorageName, err := repo.GetDefaultStorage()
-	if err != nil {
-		return nil, err
-	}
-	defaultStorage, ok := storagesMap[defaultStorageName]
-	if !ok {
-		return nil, errors.New("wrong default Storage setup")
-	}
-
-	for _, route := range routes {
-		rules, err := repo.GetRules(route)
-		if err != nil {
-			return nil, err
-		}
-		for _, ruleOptions := range rules {
-			storage, ok = storagesMap[ruleOptions.Storage]
-			if !ok {
-				storage = defaultStorage
-			}
-			rule, err := getRuleFromOptions(ruleOptions, storage, route)
-			if err != nil {
-				return nil, err
-			}
-
-			resolver.Add(route, rule)
-		}
-	}
-	return &Config{
+	c := Config{
 		repository: repo,
 		resolver:   resolver,
 		storages:   storagesMap,
 		lock:       &sync.RWMutex{},
-	}, nil
+	}
+	return &c, c.Init()
 }

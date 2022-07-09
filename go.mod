@@ -28,6 +28,7 @@ require (
 	github.com/prometheus/procfs v0.6.0 // indirect
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
+	github.com/valyala/fastjson v1.6.3 // indirect
 	golang.org/x/sys v0.0.0-20210603081109-ebe580a85c40 // indirect
 	google.golang.org/protobuf v1.26.0-rc.1 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect

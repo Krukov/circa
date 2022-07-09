@@ -7,7 +7,6 @@ import (
 	"circa/config"
 	"circa/key_template"
 	"circa/message"
-	"circa/resolver"
 	"circa/rules"
 )
 
@@ -24,11 +23,7 @@ func NewRunner(conf *config.Config) *Runner {
 func (r *Runner) Handle(request *message.Request, makeRequest message.Requester) (resp *message.Response, err error) {
 	rules, params, err := r.config.Resolve(request.Path)
 	if err != nil {
-		if err == resolver.NotFound {
-			request.Logger.Debug().Msg("Route for request not found. Forward request")
-		} else {
-			return nil, err
-		}
+		return nil, err
 	}
 	request.Route = "-"
 	request.Host, err = r.config.GetTarget()

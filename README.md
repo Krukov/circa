@@ -52,7 +52,7 @@ Specify target host and timeout for forwarding requests
  3) prefix or proxying - `/my/*`
  4) mixed `/my/{parameter}/path/*`
 
- And need to define rules for our route: each rule heve `type` and options related to this kind of rule, 
+ And need to define rules for our route: each rule heve `kind` and options related to this kind of rule, 
 
  ```json
  {
@@ -60,7 +60,7 @@ Specify target host and timeout for forwarding requests
   "rules": {
     "/posts/{id}": [  // route
       {
-        "type": "cache",  // rule type "cache" - simple cache strategy
+        "kind": "cache",  // rule kind "cache" - simple cache strategy
         "ttl": "10s",  // cache ttl
         "key": "post-{id}",  // cache key template, can contain url parameter from route
         "storage": "main_ha"  // storage name from "storages" section that will be used for this rule
@@ -73,12 +73,12 @@ Specify target host and timeout for forwarding requests
  ```
  That is, you can run `circa` and it will cache requests to GET /posts/{id} for 10 seconds and proxy all other requests 
 
- There are a list of rules types and parameters for each:
+ There are a list of rules kinds and parameters for each:
 
 1. Cache with ttl
 ```json
 {
-    "type": "cache",  // by default
+    "kind": "cache",  // by default
     "ttl": "10m50s", // cache time to live  Valid time units are “ns”, “us” (or “µs”), “ms”, “s”, “m”, “h”.
     "key": "....."
 }
@@ -87,7 +87,7 @@ Specify target host and timeout for forwarding requests
 2. Cache with early expiration - 
 ```json
 {
-    "type": "early",
+    "kind": "early",
     "ttl": "10h", // cache time to live
     "early_ttl": "1h",  // time for pre invalidation
     "key": "....."
@@ -97,7 +97,7 @@ Specify target host and timeout for forwarding requests
 3. Cache with hit expiration - 
 ```json
 {
-    "type": "hit",
+    "kind": "hit",
     "ttl": "10h", // cache time to live
     "hits": 100,  // number of hits before cache will be invalidated
     "update_after": 10, // optional; number of hits for pre invalidation
@@ -108,7 +108,7 @@ Specify target host and timeout for forwarding requests
 4. Failover cache - 
 ```json
 {
-    "type": "fail",
+    "kind": "fail",
     "ttl": "10h", // cache time to live
     "key": "....."
 }
@@ -117,7 +117,7 @@ Specify target host and timeout for forwarding requests
 5. Rate limit - 
 ```json
 {
-    "type": "rate-limit",
+    "kind": "rate-limit",
     "ttl": "10m", // limit period
     "hits": 100, //  number of hits  ( read as 100 request per 10 min)
     "key": "....."
@@ -127,7 +127,7 @@ Specify target host and timeout for forwarding requests
 6. Retry - 
 ```json
 {
-    "type": "retry",
+    "kind": "retry",
     "methods": ["GET", "HEAD"],
     "backoff": "5s",
     "count": 5 // retry attempts
@@ -138,7 +138,7 @@ Specify target host and timeout for forwarding requests
 7. request_id -  `skip_return` - check that backend return response with tha same request ID
 ```json
 {
-    "type": "request_id",
+    "kind": "request_id",
     "methods": ["GET", "POST", "DELETE", "PUT", "PATCH"],
     "skip_return": false // by default
 }
@@ -147,7 +147,7 @@ Specify target host and timeout for forwarding requests
 8. idempotency
 ```json
 {
-    "type": "idempotency",
+    "kind": "idempotency",
     "ttl": "1m"
     // "key": "{R:body|hash}",
 }
@@ -156,7 +156,7 @@ Specify target host and timeout for forwarding requests
 9. invalidate
 ```json
 {
-    "type": "invalidate",
+    "kind": "invalidate",
     "methods": ["POST", "DELETE", "PUT", "PATCH"],
     "key": "posts-{id}:key"  // the key template that will be deleted after success request
 }
@@ -165,14 +165,14 @@ Specify target host and timeout for forwarding requests
 10. skip - will skip all rules see "Routing"
 ```json
 {
-    "type": "skip"
+    "kind": "skip"
 }
 ```
 
 11. proxy - rule to change method or target host for proxing 
 ```json
 {
-    "type": "proxy",
+    "kind": "proxy",
     "methods": ["GET"],  
     "path": "/posts/",  // optional
     "method": "POST",  // optional
@@ -184,20 +184,29 @@ Will proxy all get methods as post request to the https://google.com/posts/
 12. Glue
 ```json
 {
-  "type": "json",
-  "paths": ["/posts", "/articles"]
+  "kind": "glue",
+  "model": "single", // "list" 
+  "calls": {
+    "user_info": "/users/{id}/info",
+    "user_meta": "/users/{id}/meta",
+    "posts": "/posts/?user={id}"
+  },
+  "mapping": {
+    "posts": "posts"
+  }  // {..info, ..meta, "posts": posts}
 }
 
 TODO:
- - unix socket as target
- - proxy fast with no rules
- - glue
+  - proxy fast with no rules [x] - with /* rule - fast tpp
+ - cache resolve
+ - glue[partly]
+ - proxy header - like request-id just get and return back 
+ - cache condition - header, time, query 
  - proxy filebody
+ - proxy Location - bug
+ - manage api
  - circuit-breaker []
  - rate-limit with a sliding window
  - hot cache ?
- - hot reload with config change 
  - config flush
-
-ConfigRepo (store a config) -> Config (control a rules storages and sync configRepo) -> Runner 
-Request -> Resolver (route -> rules) -> Rule -> Handler  -> Requester -> Response
+ - unix socket as targe

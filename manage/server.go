@@ -8,16 +8,16 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
 
-	"circa/handler"
+	"circa/config"
 )
 
-func Run(h *handler.Runner, port string) *http.Server {
-	runnerHandlers := newRunnerHandler(h)
+func Run(c *config.Config, port string) *http.Server {
+	cm := newConfigManage(c)
 	http.Handle("/metrics", promhttp.Handler())
 
-	http.HandleFunc("/api/handler/", runnerHandlers.Handlers)
-	http.HandleFunc("/api/route/", runnerHandlers.GetHandlersByRoute)
-	http.HandleFunc("/api/target/", runnerHandlers.Target)
+	http.HandleFunc("/api/storage/", cm.Storages)
+	http.HandleFunc("/api/route/", cm.Routes)
+	// http.HandleFunc("/api/target/", cm.Target)
 
 	manageSrv := http.Server{Addr: fmt.Sprintf(":%s", port)}
 	go func() {
