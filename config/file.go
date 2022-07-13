@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"io/ioutil"
+	"sort"
 	"time"
 )
 
@@ -70,6 +71,7 @@ func (repo *fileConfigRepository) GetRoutes() ([]string, error) {
 		routes[i] = route
 		i += 1
 	}
+	sort.Strings(routes)
 	return routes, nil
 }
 
@@ -77,13 +79,13 @@ func (repo *fileConfigRepository) GetRules(route string) ([]Rule, error) {
 	return repo.config.Rules[route], nil
 }
 
-func (repo *fileConfigRepository) AddRule(route string, rule Rule) error {
-	rules, ok := repo.config.Rules[route]
+func (repo *fileConfigRepository) AddRule(rule Rule) error {
+	rules, ok := repo.config.Rules[rule.Path]
 	if !ok {
 		rules = []Rule{}
 	}
 	rules = append(rules, rule)
-	repo.config.Rules[route] = rules
+	repo.config.Rules[rule.Path] = rules
 	return nil
 }
 
@@ -96,6 +98,10 @@ func (repo *fileConfigRepository) RemoveRule(route, kind, key string) error {
 		rules = append(rules, rule)
 	}
 	return nil
+}
+
+func (repo *fileConfigRepository) Sync() {
+
 }
 
 func newFileConfig(path string) (configRepository, error) {

@@ -17,7 +17,6 @@ func (r *RateLimitRule) Process(request *message.Request, key string, storage st
 		storage.Expire(key, r.TTL)
 	}
 	if count >= r.Limit {
-		request.Skip = true
 		headers := map[string]string{
 			"X-Circa-Rate-Key": key,
 		}

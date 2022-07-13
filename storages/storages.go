@@ -16,7 +16,7 @@ type Options struct {
 
 type Storage interface {
 	String() string
-
+	
 	Get(key string) (*message.Response, error)
 	Set(key string, value *message.Response, ttl time.Duration) (bool, error)
 	Incr(key string) (int, error)

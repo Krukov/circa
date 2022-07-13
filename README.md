@@ -193,20 +193,40 @@ Will proxy all get methods as post request to the https://google.com/posts/
   },
   "mapping": {
     "posts": "posts"
-  }  // {..info, ..meta, "posts": posts}
+  },  // {..info, ..meta, "posts": posts}
+  "keys": {
+    "posts": "user_id"
+  }
 }
 
 TODO:
-  - proxy fast with no rules [x] - with /* rule - fast tpp
- - cache resolve
- - glue[partly]
- - proxy header - like request-id just get and return back 
+ - manage api
+ - Storage disable (manage api)
+ - config flush
+ 
  - cache condition - header, time, query 
+ - hot cache 
+
+ - rate-limit with a sliding window
+ - circuit-breaker 
+ - retry by header Retry-After
+ - block by condition
+ - lock rule
+
+ - proxy header - like request-id just get and return back 
+ - glue[advance]
+ - transform Request
+ - transform Responce 
+ 
+ - trasing metrics
+ - sentry
+ - audit rule 
+
+ - AUTH: jwt 
+ 
+ - json logging
  - proxy filebody
  - proxy Location - bug
- - manage api
- - circuit-breaker []
- - rate-limit with a sliding window
- - hot cache ?
- - config flush
- - unix socket as targe
+ - unix socket as target
+
+ - control panel

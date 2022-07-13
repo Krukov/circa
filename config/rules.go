@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func getRuleFromOptions(rule Rule, storage storages.Storage, route string) (*rules.Rule, error) {
+func getRuleFromOptions(rule Rule, storage storages.Storage) (*rules.Rule, error) {
 	processor, err := getRuleProcessorFromOptions(rule)
 	if err != nil {
 		return nil, err
@@ -24,7 +24,7 @@ func getRuleFromOptions(rule Rule, storage storages.Storage, route string) (*rul
 	return &rules.Rule{
 		Name:      rule.Kind,
 		Key:       rule.Key,
-		Route:     route,
+		Route:     rule.Path,
 		Methods:   methodsMap,
 		Storage:   storage,
 		Processor: processor,

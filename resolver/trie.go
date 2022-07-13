@@ -78,7 +78,7 @@ func getParam(prefix string) string {
 }
 
 func (t *node) resolve(path string) (names []string, params map[string]string, err error) {
-	path = strings.Trim(path, "/")
+	path = strings.Trim(strings.Trim(path, " "), "/")
 	names, params, _ = t.walking(strings.Split(path, "/"), names, map[string]string{})
 	if len(names) == 0 {
 		err = ErrNotFound
@@ -99,7 +99,7 @@ func (t *node) walking(path []string, rules []string, params map[string]string) 
 
 	if children, ok := t.children[nameToFind]; ok {
 		if len(path) == 1 {
-			if children.rule != "" {
+			if children.rule != "" && children.match == "" {
 				rules = append(rules, children.rule)
 			}
 			return rules, params, nil

@@ -16,7 +16,7 @@ func Run(c *config.Config, port string) *http.Server {
 	http.Handle("/metrics", promhttp.Handler())
 
 	http.HandleFunc("/api/storage/", cm.Storages)
-	http.HandleFunc("/api/route/", cm.Routes)
+	http.HandleFunc("/api/rules/", cm.Rules)
 	// http.HandleFunc("/api/target/", cm.Target)
 
 	manageSrv := http.Server{Addr: fmt.Sprintf(":%s", port)}

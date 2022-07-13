@@ -15,7 +15,7 @@ import (
 type configRepository interface {
 	GetStorages() (map[string]string, error)
 	GetStorage(name string) (string, error)
-	AddStorage(name string, DSN string) error
+	AddStorage(name, DSN string) error
 	RemoveStorage(name string) error
 
 	SetDefaultStorage(name string) error
@@ -27,10 +27,10 @@ type configRepository interface {
 
 	GetRoutes() ([]string, error)
 	GetRules(route string) ([]Rule, error)
-	// AddRule(route string, rule Rule) error
+	AddRule(rule Rule) error
 	// RemoveRule(route, kind, key string) error
 
-	// Sync()
+	Sync()
 }
 
 type Config struct {
@@ -55,6 +55,27 @@ func (c *Config) Init() error {
 	return nil
 }
 
+func (c *Config) AddRule(rule Rule) error {
+	storageClass, ok := c.storages[rule.Storage]
+	if !ok {
+		defaultStorage, _, err := c.getDefaultStorage()
+		if err != nil {
+			return err
+		}
+		storageClass = defaultStorage
+	}
+	ruleRule, err := getRuleFromOptions(rule, storageClass)
+	if err != nil {
+		return err
+	}
+	c.resolver.Add(ruleRule)
+	err = c.repository.AddRule(rule)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *Config) getRules() ([]*rules.Rule, error) {
 	routes, err := c.repository.GetRoutes()
 	if err != nil {
@@ -62,13 +83,9 @@ func (c *Config) getRules() ([]*rules.Rule, error) {
 	}
 	var storage storages.Storage
 	var ok bool
-	defaultStorageName, err := c.repository.GetDefaultStorage()
+	defaultStorage, defaultStorageName, err := c.getDefaultStorage()
 	if err != nil {
 		return nil, err
-	}
-	defaultStorage, ok := c.storages[defaultStorageName]
-	if !ok {
-		return nil, errors.New("wrong default Storage setup")
 	}
 	returnRules := []*rules.Rule{}
 
@@ -78,22 +95,51 @@ func (c *Config) getRules() ([]*rules.Rule, error) {
 			return nil, err
 		}
 		for _, ruleOptions := range rules {
+			storageName := ruleOptions.Storage
 			storage, ok = c.storages[ruleOptions.Storage]
 			if !ok {
 				storage = defaultStorage
+				storageName = defaultStorageName
 			}
-			rule, err := getRuleFromOptions(ruleOptions, storage, route)
+			if ruleOptions.Path == "" {
+				ruleOptions.Path = route
+			}
+			rule, err := getRuleFromOptions(ruleOptions, storage)
 			if err != nil {
 				return nil, err
 			}
+			rule.StorageName = storageName
 			returnRules = append(returnRules, rule)
 		}
 	}
 	return returnRules, nil
 }
 
+func (c *Config) getDefaultStorage() (storages.Storage, string, error) {
+	defaultStorageName, err := c.repository.GetDefaultStorage()
+	if err != nil {
+		return nil, "", err
+	}
+	defaultStorage, ok := c.storages[defaultStorageName]
+	if !ok {
+		return nil, "", errors.New("wrong default Storage setup")
+	}
+	return defaultStorage, defaultStorageName, nil
+}
+
 func (c *Config) Resolve(path string) (rules []*rules.Rule, params map[string]string, err error) {
-	return c.resolver.Resolve(path)
+	rules, params, err = c.resolver.Resolve(path)
+	defaultStorage, defaultStorageName, _ := c.getDefaultStorage()
+
+	// Rewrite storage if it was deleted
+	for _, r := range rules {
+		_, ok := c.storages[r.StorageName]
+		if !ok {
+			r.Storage = defaultStorage
+			r.StorageName = defaultStorageName
+		}
+	}
+	return rules, params, err
 }
 
 func (c *Config) GetTarget() (string, error) {
@@ -135,8 +181,16 @@ func (c *Config) GetStorages() (map[string]string, error) {
 	return c.repository.GetStorages()
 }
 
+func (c *Config) AddStorage(name, DSN string) error {
+	return c.repository.AddStorage(name, DSN)
+}
+
 func (c *Config) GetRoutes() ([]*rules.Rule, error) {
 	return c.getRules()
+}
+
+func (c *Config) Sync() {
+	c.repository.Sync()
 }
 
 func NewConfigFromDSN(dsn string, resolver *resolver.Resolver) (*Config, error) {

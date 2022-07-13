@@ -27,7 +27,8 @@
     "/posts/": [
       {
         "key": "posts:key:{R:query}",
-        "ttl": "10m"
+        "ttl": "10m",
+        "storage": "mem"
       },
       {
         "kind": "idempotency",

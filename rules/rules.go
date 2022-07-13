@@ -10,13 +10,12 @@ type RuleProcessor interface {
 }
 
 type Rule struct {
-	Name      string  // like kind
-	Key       string  // template
-	Route     string 
-	Methods   map[string]bool
-	
+	Name        string // like kind
+	Key         string // template
+	Route       string
+	Methods     map[string]bool
+	StorageName string //
+
 	Storage   storages.Storage
 	Processor RuleProcessor
 }
-
-
