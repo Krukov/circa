@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"sort"
@@ -9,6 +10,7 @@ import (
 
 type fileConfigRepository struct {
 	config *config
+	path   string
 }
 
 func (repo *fileConfigRepository) GetStorages() (map[string]string, error) {
@@ -100,8 +102,12 @@ func (repo *fileConfigRepository) RemoveRule(route, kind, key string) error {
 	return nil
 }
 
-func (repo *fileConfigRepository) Sync() {
-
+func (repo *fileConfigRepository) Sync() error {
+	jsonRaw, err := json.MarshalIndent(repo.config, "", "\t")
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(repo.path, jsonRaw, 0644)
 }
 
 func newFileConfig(path string) (configRepository, error) {
@@ -115,6 +121,7 @@ func newFileConfig(path string) (configRepository, error) {
 	}
 	conf := &fileConfigRepository{
 		config: c,
+		path:   path,
 	}
 	if c.Options.DefaultStorage == "" {
 		for name, _ := range c.Storages {

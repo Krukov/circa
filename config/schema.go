@@ -6,37 +6,43 @@ import (
 
 type GlobalOptions struct {
 	Target         string   `json:"target"`
-	Timeout        Duration `json:"timeout"`
+	Timeout        Duration `json:"timeout,omitempty"`
 	DefaultStorage string   `json:"default_storage"`
+}
+
+type Condition struct {
+	Status      int      `json:"status,omitempty"`
+	Header      string   `json:"header,omitempty"`
+	HeaderValue string   `json:"header_value,omitempty"`
+	Duration    Duration `json:"duration,omitempty"`
 }
 
 type Rule struct {
 	Kind string `json:"kind"`
-	Key  string `json:"key"`
+	Key  string `json:"key,omitempty"`
 
-	Timeout string   `json:"timeout"`
-	Methods []string `json:"methods"`
-	Storage string   `json:"storage"`
+	Methods []string `json:"methods,omitempty"`
+	Storage string   `json:"storage,omitempty"`
 
-	TTL          string `json:"ttl"`
-	EarlyTTL     string `json:"early_ttl"`
-	CacheControl string `json:"cache_control"`
+	TTL          string    `json:"ttl,omitempty"`
+	EarlyTTL     string    `json:"early_ttl,omitempty"`
+	Condition    Condition `json:"condition,omitempty"`
 
-	Count   int    `json:"count"`
-	Backoff string `json:"backoff"`
+	Count   int    `json:"count,omitempty"`
+	Backoff string `json:"backoff,omitempty"`
 
-	Hits            int `json:"hits"`
-	UpdateAfterHits int `json:"update_after"`
+	Hits            int `json:"hits,omitempty"`
+	UpdateAfterHits int `json:"update_after,omitempty"`
 
-	RequestIDHeaderName string `json:"id_header"`
+	RequestIDHeaderName string `json:"id_header,omitempty"`
 
-	SkipReturnRequestId bool `json:"skip_return"`
+	SkipReturnRequestId bool `json:"skip_return,omitempty"`
 
-	Target string `json:"target"`
-	Path   string `json:"path"`
-	Method string `json:"method"`
+	Target string `json:"target,omitempty"`
+	Path   string `json:"path,omitempty"`
+	Method string `json:"method,omitempty"`
 
-	Calls map[string]string `json:"calls"`
+	Calls map[string]string `json:"calls,omitempty"`
 }
 
 type config struct {

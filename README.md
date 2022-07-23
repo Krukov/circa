@@ -200,12 +200,10 @@ Will proxy all get methods as post request to the https://google.com/posts/
 }
 
 TODO:
- - manage api
- - Storage disable (manage api)
- - config flush
- 
  - cache condition - header, time, query 
  - hot cache 
+ 
+ - rule disable (manage api)
 
  - rate-limit with a sliding window
  - circuit-breaker 
@@ -224,7 +222,6 @@ TODO:
 
  - AUTH: jwt 
  
- - json logging
  - proxy filebody
  - proxy Location - bug
  - unix socket as target

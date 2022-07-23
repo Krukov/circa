@@ -30,13 +30,15 @@ type configRepository interface {
 	AddRule(rule Rule) error
 	// RemoveRule(route, kind, key string) error
 
-	Sync()
+	Sync() error
 }
 
 type Config struct {
-	repository configRepository
-	storages   map[string]storages.Storage
-	resolver   *resolver.Resolver
+	repository  configRepository
+	storages    map[string]storages.Storage
+	storageLock *sync.RWMutex
+
+	resolver *resolver.Resolver
 
 	target  string
 	timeout time.Duration
@@ -56,14 +58,17 @@ func (c *Config) Init() error {
 }
 
 func (c *Config) AddRule(rule Rule) error {
+	var err error
+	c.storageLock.RLock()
 	storageClass, ok := c.storages[rule.Storage]
 	if !ok {
-		defaultStorage, _, err := c.getDefaultStorage()
+		storageClass, _, err = c.getDefaultStorage()
 		if err != nil {
+			c.storageLock.RUnlock()
 			return err
 		}
-		storageClass = defaultStorage
 	}
+	c.storageLock.RUnlock()
 	ruleRule, err := getRuleFromOptions(rule, storageClass)
 	if err != nil {
 		return err
@@ -83,7 +88,9 @@ func (c *Config) getRules() ([]*rules.Rule, error) {
 	}
 	var storage storages.Storage
 	var ok bool
+	c.storageLock.RLock()
 	defaultStorage, defaultStorageName, err := c.getDefaultStorage()
+	c.storageLock.RUnlock()
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +103,9 @@ func (c *Config) getRules() ([]*rules.Rule, error) {
 		}
 		for _, ruleOptions := range rules {
 			storageName := ruleOptions.Storage
+			c.storageLock.RLock()
 			storage, ok = c.storages[ruleOptions.Storage]
+			c.storageLock.RUnlock()
 			if !ok {
 				storage = defaultStorage
 				storageName = defaultStorageName
@@ -129,6 +138,9 @@ func (c *Config) getDefaultStorage() (storages.Storage, string, error) {
 
 func (c *Config) Resolve(path string) (rules []*rules.Rule, params map[string]string, err error) {
 	rules, params, err = c.resolver.Resolve(path)
+
+	// TODO: redone without lock storages ckeck (for many rules we don't need storage at all)
+	c.storageLock.RLock()
 	defaultStorage, defaultStorageName, _ := c.getDefaultStorage()
 
 	// Rewrite storage if it was deleted
@@ -139,6 +151,7 @@ func (c *Config) Resolve(path string) (rules []*rules.Rule, params map[string]st
 			r.StorageName = defaultStorageName
 		}
 	}
+	c.storageLock.RUnlock()
 	return rules, params, err
 }
 
@@ -182,15 +195,33 @@ func (c *Config) GetStorages() (map[string]string, error) {
 }
 
 func (c *Config) AddStorage(name, DSN string) error {
+	var err error
+	c.storageLock.Lock()
+	c.storages[name], err = storages.StorageFormDSN(DSN)
+	if err != nil {
+		return err
+	}
+	c.storageLock.Unlock()
 	return c.repository.AddStorage(name, DSN)
+}
+
+func (c *Config) DelStorage(name string) error {
+	err := c.repository.RemoveStorage(name)
+	if err != nil {
+		return err
+	}
+	c.storageLock.Lock()
+	delete(c.storages, name)
+	c.storageLock.Unlock()
+	return nil
 }
 
 func (c *Config) GetRoutes() ([]*rules.Rule, error) {
 	return c.getRules()
 }
 
-func (c *Config) Sync() {
-	c.repository.Sync()
+func (c *Config) Sync() error {
+	return c.repository.Sync()
 }
 
 func NewConfigFromDSN(dsn string, resolver *resolver.Resolver) (*Config, error) {
@@ -212,10 +243,11 @@ func NewConfigFromDSN(dsn string, resolver *resolver.Resolver) (*Config, error) 
 		log.Info().Msgf("Configured storage '%v' with dns '%v'", name, DSN)
 	}
 	c := Config{
-		repository: repo,
-		resolver:   resolver,
-		storages:   storagesMap,
-		lock:       &sync.RWMutex{},
+		repository:  repo,
+		resolver:    resolver,
+		storages:    storagesMap,
+		storageLock: &sync.RWMutex{},
+		lock:        &sync.RWMutex{},
 	}
 	return &c, c.Init()
 }
