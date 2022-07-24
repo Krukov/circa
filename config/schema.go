@@ -11,10 +11,11 @@ type GlobalOptions struct {
 }
 
 type Condition struct {
-	Status      int      `json:"status,omitempty"`
-	Header      string   `json:"header,omitempty"`
-	HeaderValue string   `json:"header_value,omitempty"`
-	Duration    Duration `json:"duration,omitempty"`
+	Status            int      `json:"status,omitempty"`
+	Header            string   `json:"header,omitempty"`
+	SkipHeaderValue   string   `json:"skip_header_value,omitempty"`
+	ShouldHeaderValue string   `json:"should_header_value,omitempty"`
+	Duration          Duration `json:"duration,omitempty"`
 }
 
 type Rule struct {
@@ -24,9 +25,9 @@ type Rule struct {
 	Methods []string `json:"methods,omitempty"`
 	Storage string   `json:"storage,omitempty"`
 
-	TTL          string    `json:"ttl,omitempty"`
-	EarlyTTL     string    `json:"early_ttl,omitempty"`
-	Condition    Condition `json:"condition,omitempty"`
+	TTL       string    `json:"ttl,omitempty"`
+	EarlyTTL  string    `json:"early_ttl,omitempty"`
+	Condition Condition `json:"condition,omitempty"`
 
 	Count   int    `json:"count,omitempty"`
 	Backoff string `json:"backoff,omitempty"`

@@ -7,7 +7,9 @@ import (
 )
 
 type CacheRule struct {
-	TTL time.Duration
+	TTL            time.Duration
+	Duration       time.Duration
+	ResponceStatus int
 }
 
 func (r *CacheRule) Process(request *message.Request, key string, storage storages.Storage, call message.Requester) (resp *message.Response, hit bool, err error) {
@@ -20,8 +22,16 @@ func (r *CacheRule) Process(request *message.Request, key string, storage storag
 		return
 	} else {
 		err = nil
+		start := time.Now()
 		resp, err = call(request)
+		elapsed := time.Since(start)
 		if err == nil {
+			if r.Duration != 0 && r.Duration < elapsed {
+				return
+			}
+			if resp.Status != r.ResponceStatus {
+				return
+			}
 			storage.Set(key, resp, r.TTL)
 		}
 	}

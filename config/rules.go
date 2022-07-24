@@ -28,6 +28,13 @@ func getRuleFromOptions(rule Rule, storage storages.Storage) (*rules.Rule, error
 		Methods:   methodsMap,
 		Storage:   storage,
 		Processor: processor,
+		Condition: rules.Condition{
+			Status:            rule.Condition.Status,
+			SkipHeaderValue:   rule.Condition.SkipHeaderValue,
+			ShouldHeaderValue: rule.Condition.ShouldHeaderValue,
+			Header:            rule.Condition.Header,
+			Duration:          rule.Condition.Duration.Duration,
+		},
 	}, nil
 }
 
@@ -96,7 +103,11 @@ func convertToInvalidateRule(rule Rule) (*rules.InvalidateRule, error) {
 
 func convertToCacheRule(rule Rule) (*rules.CacheRule, error) {
 	ttl, err := timeFromString(rule.TTL)
-	return &rules.CacheRule{TTL: ttl}, err
+	return &rules.CacheRule{
+		TTL: ttl, 
+		Duration: rule.Condition.Duration.Duration,
+		ResponceStatus: rule.Condition.Status,
+	}, err
 }
 
 func convertToEarlyCacheRule(rule Rule) (*rules.EarlyCacheRule, error) {

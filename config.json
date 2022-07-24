@@ -1,72 +1,101 @@
 {
-  "storages": {
-    "main": "redis://localhost/2",
-    "mem": "mem://"
-  },
-  "rules": {
-    "/posts/{id}": [
-      {
-        "kind": "glue",
-        "model": "object",
-        "calls": {
-          "post_main": "/posts/{id}",
-          "post_meta": "/post_meta/{id}"
-        }
-      },
-      {
-        "kind": "invalidate",
-        "methods": ["DELETE", "PUT", "PATCH"],
-        "key": "posts-{id}:key"
-      },
-      {
-        "kind": "invalidate",
-        "methods": ["DELETE", "PUT", "PATCH"],
-        "key": "posts:key"
-      }
-    ],
-    "/posts/": [
-      {
-        "key": "posts:key:{R:query}",
-        "ttl": "10m",
-        "storage": "mem"
-      },
-      {
-        "kind": "idempotency",
-        "key": "post-ide-{R:body|hash}",
-        "ttl": "10s",
-        "methods": ["POST"]
-      }
-    ],
-    "/posts/3": [
-      {
-        "kind": "skip",
-        "methods": ["GET", "POST", "DELETE", "PUT", "PATCH"]
-      }
-    ],
-    "hit/posts": [
-      {
-        "kind": "hit",
-        "ttl": "10m",
-        "key": "posts:hit:key",
-        "hits": 100,
-        "update_after": 50
-      },
-      {
-        "kind": "proxy",
-        "path": "/posts/"
-      }
-    ],
-    "/static/*" : [
-      {
-        "kind": "cache",
-        "ttl": "1m",
-        "key": "{R:full_path}"
-      }
-    ]
-  },
-  "options": {
-    "target": "http://localhost:8888",
-    "timeout": "1m30s",
-    "default_storage": "main"
-  }
+	"version": "",
+	"storages": {
+		"main": "redis://localhost/2",
+		"mem": "mem://"
+	},
+	"rules": {
+		"/api/*": [
+			{
+				"kind": "proxy",
+				"key": "test",
+				"target": "http://localhost:8000",
+				"path": "/api/*",
+				"condition": {
+					"header": "X-Test",
+					"should_header_value": "1"
+				}
+			}
+		],
+		"/posts/": [
+			{
+				"kind": "cache",
+				"key": "posts:key:{R:query}",
+				"storage": "mem",
+				"ttl": "10m"
+			},
+			{
+				"kind": "idempotency",
+				"key": "post-ide-{R:body|hash}",
+				"methods": [
+					"POST"
+				],
+				"ttl": "10s"
+			}
+		],
+		"/posts/3": [
+			{
+				"kind": "skip",
+				"methods": [
+					"GET",
+					"POST",
+					"DELETE",
+					"PUT",
+					"PATCH"
+				]
+			}
+		],
+		"/posts/{id}": [
+			{
+				"kind": "glue",
+				"calls": {
+					"post_main": "/posts/{id}",
+					"post_meta": "/post_meta/{id}"
+				}
+			},
+			{
+				"kind": "invalidate",
+				"key": "posts-{id}:key",
+				"methods": [
+					"DELETE",
+					"PUT",
+					"PATCH"
+				]
+			},
+			{
+				"kind": "invalidate",
+				"key": "posts:key",
+				"methods": [
+					"DELETE",
+					"PUT",
+					"PATCH"
+				]
+			}
+		],
+		"/static/*": [
+			{
+				"kind": "cache",
+				"key": "{R:full_path}",
+				"ttl": "1m"
+			}
+		],
+		"hit/posts": [
+			{
+				"kind": "hit",
+				"key": "posts:hit:key",
+				"ttl": "10m",
+				"hits": 100,
+				"update_after": 50
+			},
+			{
+				"kind": "proxy",
+				"path": "/posts/"
+			}
+		]
+	},
+	"options": {
+		"target": "http://localhost:8888",
+		"timeout": "1m30s",
+		"default_storage": "main"
+	}
 }

@@ -65,6 +65,7 @@ func (r *Runner) toCall(call message.Requester, rule *rules.Rule) message.Reques
 				status = "hit"
 			}
 		}
+		request.Logger.Debug().Msgf("Status: %s", status)
 		routeHandlerCount.WithLabelValues(rule.Name, rule.Route, rule.Key, status).Inc()
 		return resp, err
 	}
@@ -78,7 +79,7 @@ func (r *Runner) run(request *message.Request, call message.Requester, rule *rul
 		Str("key", key).Logger()
 	request.Logger = logger
 	logger.Debug().Msg("Process rule")
-	return rule.Processor.Process(request, key, rule.Storage, call)
+	return rule.Process(request, key, rule.Storage, call)
 }
 
 func (r *Runner) makeKey(request *message.Request, rule *rules.Rule) string {
