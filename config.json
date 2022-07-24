@@ -91,6 +91,15 @@
 				"kind": "proxy",
 				"path": "/posts/"
 			}
+		],
+		"*": [
+			{
+				"kind": "request-id"
+			},
+			{
+				"kind": "proxy-header",
+				"header": "X-Test"
+			}
 		]
 	},
 	"options": {

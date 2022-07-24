@@ -46,8 +46,10 @@ func getRuleProcessorFromOptions(rule Rule) (rules.RuleProcessor, error) {
 		return convertToSkipRule(rule)
 	case "retry":
 		return convertToRetryRule(rule)
-	case "request_id":
+	case "request-id":
 		return convertToRequestIDRule(rule)
+	case "proxy-header":
+		return convertToProxyHeaderRule(rule)
 	case "rate-limit":
 		return convertToRateLimitRule(rule)
 	case "idempotency":
@@ -104,8 +106,8 @@ func convertToInvalidateRule(rule Rule) (*rules.InvalidateRule, error) {
 func convertToCacheRule(rule Rule) (*rules.CacheRule, error) {
 	ttl, err := timeFromString(rule.TTL)
 	return &rules.CacheRule{
-		TTL: ttl, 
-		Duration: rule.Condition.Duration.Duration,
+		TTL:            ttl,
+		Duration:       rule.Condition.Duration.Duration,
 		ResponceStatus: rule.Condition.Status,
 	}, err
 }
@@ -125,11 +127,15 @@ func convertToFailRule(rule Rule) (*rules.FailRule, error) {
 }
 
 func convertToRequestIDRule(rule Rule) (*rules.RequestIDRule, error) {
-	header := rule.RequestIDHeaderName
+	header := rule.HeaderName
 	if header == "" {
 		header = "X-Request-ID"
 	}
 	return &rules.RequestIDRule{HeaderName: header, SkipCheckReturn: rule.SkipReturnRequestId}, nil
+}
+
+func convertToProxyHeaderRule(rule Rule) (*rules.ProxyHeaderRule, error) {
+	return &rules.ProxyHeaderRule{HeaderName: rule.HeaderName}, nil
 }
 
 func convertToHitRule(rule Rule) (*rules.HitRule, error) {

@@ -13,9 +13,11 @@ type RequestIDRule struct {
 }
 
 func (r *RequestIDRule) Process(request *message.Request, key string, storage storages.Storage, call message.Requester) (*message.Response, bool, error) {
-	requestID := uuid.NewString()
+	var requestID string
 	if _, ok := request.Headers[r.HeaderName]; ok {
 		requestID = request.Headers[r.HeaderName]
+	} else {
+		requestID = uuid.NewString()
 	}
 	request.Headers[r.HeaderName] = requestID
 	request.Logger = request.Logger.With().Str("request_id", requestID).Logger()

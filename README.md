@@ -200,8 +200,6 @@ Will proxy all get methods as post request to the https://google.com/posts/
 }
 
 TODO:
- - cache condition - header, time, query 
- - hot cache 
  
  - rule disable (manage api)
 
@@ -210,8 +208,8 @@ TODO:
  - retry by header Retry-After
  - block by condition
  - lock rule
+ - hot cache
 
- - proxy header - like request-id just get and return back 
  - glue[advance]
  - transform Request
  - transform Responce 

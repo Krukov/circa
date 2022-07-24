@@ -35,7 +35,7 @@ type Rule struct {
 	Hits            int `json:"hits,omitempty"`
 	UpdateAfterHits int `json:"update_after,omitempty"`
 
-	RequestIDHeaderName string `json:"id_header,omitempty"`
+	HeaderName string `json:"header,omitempty"`
 
 	SkipReturnRequestId bool `json:"skip_return,omitempty"`
 
