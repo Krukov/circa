@@ -61,13 +61,13 @@ func (cm *configManage) GetRules(w http.ResponseWriter, r *http.Request) {
 func (cm *configManage) AddRoute(w http.ResponseWriter, r *http.Request) {
 	var ruleOptions config.Rule
 	err := json.NewDecoder(r.Body).Decode(&ruleOptions)
-	if err != nil {
+	if err != nil || ruleOptions.Kind == "" {
 		writeError(w, &errorResponse{"FORMAT_ERROR", fmt.Sprintf("Can't decode body %e", err)})
 		return
 	}
 	err = cm.c.AddRule(ruleOptions)
 	if err != nil {
-		writeError(w, &errorResponse{"WRONG_RULE", "Unnown rule type"})
+		writeError(w, &errorResponse{"WRONG_RULE", "Unknown rule type"})
 		return
 	}
 	w.WriteHeader(http.StatusCreated)

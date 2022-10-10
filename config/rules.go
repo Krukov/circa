@@ -46,6 +46,8 @@ func getRuleProcessorFromOptions(rule Rule) (rules.RuleProcessor, error) {
 		return convertToSkipRule(rule)
 	case "retry":
 		return convertToRetryRule(rule)
+	case "static":
+	    return convertToStaticRule(rule)
 	case "request-id":
 		return convertToRequestIDRule(rule)
 	case "proxy-header":
@@ -54,6 +56,8 @@ func getRuleProcessorFromOptions(rule Rule) (rules.RuleProcessor, error) {
 		return convertToRateLimitRule(rule)
 	case "idempotency":
 		return convertToIdempotencyRule(rule)
+	case "circuit-breaker":
+	    return convertToCircuitBreakerRule(rule)
 	case "fail":
 		return convertToFailRule(rule)
 	case "hit":
@@ -145,6 +149,16 @@ func convertToHitRule(rule Rule) (*rules.HitRule, error) {
 
 func convertToGlueRule(rule Rule) (*rules.GlueRule, error) {
 	return &rules.GlueRule{Calls: rule.Calls}, nil
+}
+
+func convertToCircuitBreakerRule(rule Rule) (*rules.CircuitBreaker, error) {
+	ttl, err := timeFromString(rule.TTL)
+	openttl, err := timeFromString(rule.OpenTTL)
+	return &rules.CircuitBreaker{TTL: ttl, ErrorRate: rule.ErrorRate, MinCalls: rule.MinCalls, OpenTTL: openttl}, err
+}
+
+func convertToStaticRule(rule Rule) (*rules.StaticRule, error) {
+	return &rules.StaticRule{Response: rule.Response}, nil
 }
 
 func timeFromString(in string) (time.Duration, error) {

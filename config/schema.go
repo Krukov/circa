@@ -35,9 +35,15 @@ type Rule struct {
 	Hits            int `json:"hits,omitempty"`
 	UpdateAfterHits int `json:"update_after,omitempty"`
 
+	MinCalls int `json:"min_calls,omitempty"`
+	ErrorRate int `json:"error_rate,omitempty"`
+	OpenTTL string `json:"open_ttl,omitempty"`
+
 	HeaderName string `json:"header,omitempty"`
 
 	SkipReturnRequestId bool `json:"skip_return,omitempty"`
+
+	Response string `json:"response,omitempty"`
 
 	Target string `json:"target,omitempty"`
 	Path   string `json:"path,omitempty"`

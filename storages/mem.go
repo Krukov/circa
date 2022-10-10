@@ -39,8 +39,16 @@ func (s *Memory) Set(key string, value *message.Response, ttl time.Duration) (bo
 	return !exists, err
 }
 
+func (s *Memory) SetRaw(key, value string, ttl time.Duration) error {
+	return s.gc.SetWithExpire(key, value, ttl)
+}
+
 func (s *Memory) Del(key string) (bool, error) {
 	return s.gc.Remove(key), nil
+}
+
+func (s *Memory) Exists(key string) (bool, error) {
+	return s.gc.Has(key), nil
 }
 
 func (s *Memory) Get(key string) (*message.Response, error) {

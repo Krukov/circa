@@ -16,11 +16,15 @@ type Options struct {
 
 type Storage interface {
 	String() string
-	
+
 	Get(key string) (*message.Response, error)
 	Set(key string, value *message.Response, ttl time.Duration) (bool, error)
 	Incr(key string) (int, error)
 	Del(key string) (bool, error)
+	Exists(key string) (bool, error)
+
+	SetRaw(key, value string, ttl time.Duration) error
+	// GetRow(key string, value string)
 
 	Expire(key string, ttl time.Duration) error
 }

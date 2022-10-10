@@ -22,7 +22,7 @@ func Run(c *config.Config, port string) *http.Server {
 	router.HandleFunc("/api/storage/", cm.Storages)
 	router.HandleFunc("/api/rules/", cm.Rules)
 	router.HandleFunc("/api/sync/", cm.Sync)
-	
+
 	logger := log.With().
 		Str("port", port).
 		Str("managment_api", "true").

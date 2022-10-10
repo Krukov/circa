@@ -45,6 +45,12 @@
 				]
 			}
 		],
+		"/posts/4": [
+			{
+				"kind": "static",
+				"response": "{\"status\": \"ok\"}"
+			}
+		],
 		"/posts/{id}": [
 			{
 				"kind": "glue",

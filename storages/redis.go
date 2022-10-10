@@ -80,6 +80,16 @@ func (s *Redis) Set(key string, value *message.Response, ttl time.Duration) (boo
 	return added, nil
 }
 
+func (s *Redis) SetRaw(key, value string, ttl time.Duration) error {
+	ctx := context.Background()
+	start := time.Now()
+	defer func() {
+		operationHistogram.WithLabelValues(s.String(), "set_raw").Observe(time.Since(start).Seconds())
+	}()
+	_, err := s.client.Set(ctx, key, value, ttl).Result()
+	return err
+}
+
 func (s *Redis) Del(key string) (bool, error) {
 	ctx := context.Background()
 	start := time.Now()
@@ -91,6 +101,19 @@ func (s *Redis) Del(key string) (bool, error) {
 		return false, err
 	}
 	return deleted > 0, nil
+}
+
+func (s *Redis) Exists(key string) (bool, error) {
+	ctx := context.Background()
+	start := time.Now()
+	defer func() {
+		operationHistogram.WithLabelValues(s.String(), "exists").Observe(time.Since(start).Seconds())
+	}()
+	exc, err := s.client.Exists(ctx, key).Result()
+	if err != nil {
+		return false, err
+	}
+	return exc > 0, nil
 }
 
 func (s *Redis) Get(key string) (*message.Response, error) {

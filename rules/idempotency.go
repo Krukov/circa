@@ -11,7 +11,7 @@ type IdempotencyRule struct {
 }
 
 func (r *IdempotencyRule) Process(request *message.Request, key string, storage storages.Storage, call message.Requester) (*message.Response, bool, error) {
-	if setted, err := storage.Set(key, &message.Response{}, r.TTL); !setted && err == nil {
+	if set, err := storage.Set(key, &message.Response{}, r.TTL); !set && err == nil {
 		request.Skip = true
 		return message.NewResponse(409, []byte(`{"message":"dublicated"}`), map[string]string{}), true, nil
 	}
