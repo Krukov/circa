@@ -17,7 +17,7 @@ type Response struct {
 	hmutex  sync.RWMutex
 }
 
-func NewResponse(status int, body []byte, headers map[string]string) (*Response) {
+func NewResponse(status int, body []byte, headers map[string]string) *Response {
 	if _, ok := headers["Content-Type"]; !ok {
 		headers["Content-Type"] = "application/json; charset=utf8"
 	}

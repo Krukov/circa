@@ -26,11 +26,11 @@ func (r *Resolver) Add(rule *rules.Rule) error {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 	r.router.addRule(rule.Route)
-	ruls, ok := r.rules[rule.Route]
+	rls, ok := r.rules[rule.Route]
 	if !ok {
-		ruls = []*rules.Rule{}
+		rls = []*rules.Rule{}
 	}
-	r.rules[rule.Route] = append(ruls, rule)
+	r.rules[rule.Route] = append(rls, rule)
 	return nil
 }
 

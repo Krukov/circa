@@ -82,7 +82,7 @@ func (repo *fileConfigRepository) GetRules(route string) ([]Rule, error) {
 }
 
 func (repo *fileConfigRepository) AddRule(rule Rule) error {
-	rules, ok := repo.config.Rules[rule.Path]
+	rules, ok := repo.config.Rules[rule.Route]
 	if !ok {
 		rules = []Rule{}
 	}

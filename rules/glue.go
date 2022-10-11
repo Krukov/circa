@@ -26,9 +26,9 @@ func (r *GlueRule) Process(request *message.Request, key string, storage storage
 	responses := []*glueResp{}
 	for name, path := range r.Calls {
 		wg.Add(1)
-		go func(request *message.Request, name string) {
+		go func(req *message.Request, name string) {
 			defer wg.Done()
-			resp, _, err := simpleCall(request, call)
+			resp, _, err := simpleCall(req, call)
 			l.Lock()
 			defer l.Unlock()
 			responses = append(responses, &glueResp{name: name, resp: resp, err: err})
@@ -42,6 +42,10 @@ func (r *GlueRule) Process(request *message.Request, key string, storage storage
 func copyRequest(req *message.Request, path string) *message.Request {
 	path = key_template.FormatTemplate(path, req.Params)
 	fp := strings.Replace(req.FullPath, req.Path, path, 1)
+	headers := map[string]string{}
+	for n, h := range req.Headers {
+	    headers[n] = h
+	}
 	r := message.Request{
 		FullPath: fp,
 		Path:     path,
@@ -52,7 +56,7 @@ func copyRequest(req *message.Request, path string) *message.Request {
 		Route:    req.Route,
 		Params:   req.Params,
 		Query:    req.Query,
-		Headers:  req.Headers,
+		Headers:  headers,
 		Timeout:  req.Timeout,
 		Skip:     req.Skip,
 		Logger:   req.Logger.With().Logger(),

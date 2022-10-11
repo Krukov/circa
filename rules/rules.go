@@ -35,6 +35,7 @@ type Rule struct {
 
 func (r *Rule) Process(request *message.Request, key string, storage storages.Storage, call message.Requester) (*message.Response, bool, error) {
 	if r.skipCondition(request) {
+		request.Logger.Debug().Msgf("skip by condition %s", r.Name)
 		resp, err := call(request)
 		return resp, false, err
 	}

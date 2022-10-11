@@ -46,7 +46,7 @@ func (cm *configManage) GetRules(w http.ResponseWriter, r *http.Request) {
 		rs, _, err = cm.c.Resolve(r.URL.Query().Get("path"))
 	}
 	if err != nil {
-		
+
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(&errorResponse{"ERROR_ROUTES_GETTING", "Can't get routes"})
 		return

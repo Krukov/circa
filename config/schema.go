@@ -35,9 +35,9 @@ type Rule struct {
 	Hits            int `json:"hits,omitempty"`
 	UpdateAfterHits int `json:"update_after,omitempty"`
 
-	MinCalls int `json:"min_calls,omitempty"`
-	ErrorRate int `json:"error_rate,omitempty"`
-	OpenTTL string `json:"open_ttl,omitempty"`
+	MinCalls  int    `json:"min_calls,omitempty"`
+	ErrorRate int    `json:"error_rate,omitempty"`
+	OpenTTL   string `json:"open_ttl,omitempty"`
 
 	HeaderName string `json:"header,omitempty"`
 
@@ -47,6 +47,7 @@ type Rule struct {
 
 	Target string `json:"target,omitempty"`
 	Path   string `json:"path,omitempty"`
+	Route  string
 	Method string `json:"method,omitempty"`
 
 	Calls map[string]string `json:"calls,omitempty"`

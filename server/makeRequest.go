@@ -17,7 +17,7 @@ func makeRequest(request *message.Request) (*message.Response, error) {
 	start := time.Now()
 	logger := request.Logger.With().
 		Str("host", request.Host).
-		Str("path", request.Path).
+		Str("path", request.FullPath).
 		Str("timeout", request.Timeout.String()).
 		Logger()
 	logger.Info().Msg("->> Forward request")

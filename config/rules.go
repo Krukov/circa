@@ -24,7 +24,7 @@ func getRuleFromOptions(rule Rule, storage storages.Storage) (*rules.Rule, error
 	return &rules.Rule{
 		Name:      rule.Kind,
 		Key:       rule.Key,
-		Route:     rule.Path,
+		Route:     rule.Route,
 		Methods:   methodsMap,
 		Storage:   storage,
 		Processor: processor,
@@ -47,7 +47,7 @@ func getRuleProcessorFromOptions(rule Rule) (rules.RuleProcessor, error) {
 	case "retry":
 		return convertToRetryRule(rule)
 	case "static":
-	    return convertToStaticRule(rule)
+		return convertToStaticRule(rule)
 	case "request-id":
 		return convertToRequestIDRule(rule)
 	case "proxy-header":
@@ -57,7 +57,7 @@ func getRuleProcessorFromOptions(rule Rule) (rules.RuleProcessor, error) {
 	case "idempotency":
 		return convertToIdempotencyRule(rule)
 	case "circuit-breaker":
-	    return convertToCircuitBreakerRule(rule)
+		return convertToCircuitBreakerRule(rule)
 	case "fail":
 		return convertToFailRule(rule)
 	case "hit":
@@ -77,7 +77,8 @@ func getRuleProcessorFromOptions(rule Rule) (rules.RuleProcessor, error) {
 }
 
 func convertToProxyRule(rule Rule) (*rules.ProxyRule, error) {
-	return &rules.ProxyRule{Target: rule.Target, Method: rule.Method, Path: rule.Path}, nil
+	path := "/" + strings.Trim(rule.Path, "/")
+	return &rules.ProxyRule{Target: rule.Target, Method: rule.Method, Path: path}, nil
 }
 
 func convertToSkipRule(rule Rule) (*rules.SkipRule, error) {
@@ -112,7 +113,7 @@ func convertToCacheRule(rule Rule) (*rules.CacheRule, error) {
 	return &rules.CacheRule{
 		TTL:            ttl,
 		Duration:       rule.Condition.Duration.Duration,
-		ResponceStatus: rule.Condition.Status,
+		ResponseStatus: rule.Condition.Status,
 	}, err
 }
 

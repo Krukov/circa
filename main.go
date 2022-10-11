@@ -53,7 +53,7 @@ func main() {
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-    ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	circa := server.Run(cancel, Runner, *port)
 	var manageSrv *http.Server

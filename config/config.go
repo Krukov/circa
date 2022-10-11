@@ -113,6 +113,7 @@ func (c *Config) getRules() ([]*rules.Rule, error) {
 			if ruleOptions.Path == "" {
 				ruleOptions.Path = route
 			}
+			ruleOptions.Route = route
 			rule, err := getRuleFromOptions(ruleOptions, storage)
 			if err != nil {
 				return nil, err
@@ -139,7 +140,7 @@ func (c *Config) getDefaultStorage() (storages.Storage, string, error) {
 func (c *Config) Resolve(path string) (rules []*rules.Rule, params map[string]string, err error) {
 	rules, params, err = c.resolver.Resolve(path)
 
-	// TODO: redone without lock storages ckeck (for many rules we don't need storage at all)
+	// TODO: redone without lock storages check (for many rules we don't need storage at all)
 	c.storageLock.RLock()
 	defaultStorage, defaultStorageName, _ := c.getDefaultStorage()
 

@@ -65,7 +65,6 @@ func (r *Runner) toCall(call message.Requester, rule *rules.Rule) message.Reques
 				status = "hit"
 			}
 		}
-		request.Logger.Debug().Msgf("Status: %s", status)
 		routeHandlerCount.WithLabelValues(rule.Name, rule.Route, rule.Key, status).Inc()
 		return resp, err
 	}

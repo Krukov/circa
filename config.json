@@ -9,7 +9,7 @@
 			{
 				"kind": "proxy",
 				"key": "test",
-				"target": "http://localhost:8000",
+				"target": "http://localhost:3001",
 				"path": "/api/*",
 				"condition": {
 					"header": "X-Test",
@@ -21,7 +21,7 @@
 			{
 				"kind": "cache",
 				"key": "posts:key:{R:query}",
-				"storage": "mem",
+				"storage": "main",
 				"ttl": "10m"
 			},
 			{
@@ -87,15 +87,12 @@
 		],
 		"hit/posts": [
 			{
-				"kind": "hit",
-				"key": "posts:hit:key",
-				"ttl": "10m",
-				"hits": 100,
-				"update_after": 50
+				"kind": "proxy",
+				"path": "posts/"
 			},
 			{
-				"kind": "proxy",
-				"path": "/posts/"
+				"kind": "proxy-header",
+				"header": "X-Test2"
 			}
 		],
 		"*": [
@@ -109,7 +106,7 @@
 		]
 	},
 	"options": {
-		"target": "http://localhost:8888",
+		"target": "http://localhost:3000",
 		"timeout": "1m30s",
 		"default_storage": "main"
 	}

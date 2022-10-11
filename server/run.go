@@ -57,26 +57,6 @@ func Run(cancel context.CancelFunc, r *runner.Runner, port string) *fasthttp.Ser
 	return &srv
 }
 
-// func createProxyHandler(r *runner.Runner) func(ctx *fasthttp.RequestCtx) {
-// 	return func(ctx *fasthttp.RequestCtx) {
-// 		_, err := r.Config.GetTarget()
-// 		if err != nil {
-// 			responseError(ctx, err)
-// 			return
-// 		}
-// 		ctx.Request.SetHost("localhost:8888")
-// 		timeout, err := r.Config.GetTimeout()
-// 		if err != nil {
-// 			responseError(ctx, err)
-// 			return
-// 		}
-// 		if err := fasthttp.DoTimeout(&ctx.Request, &ctx.Response, timeout); err != nil {
-// 			responseError(ctx, err)
-// 			return
-// 		}
-// 	}
-// }
-
 func requestFromHttpRequest(ctx *fasthttp.RequestCtx) *message.Request {
 	headers := map[string]string{}
 	ctx.Request.Header.VisitAll(func(key, value []byte) {

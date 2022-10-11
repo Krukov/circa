@@ -7,7 +7,7 @@ import (
 
 func createRouter() *node {
 	t := newTrie("")
-	t.addRule("/",)
+	t.addRule("/")
 	t.addRule("user/me")
 	t.addRule("user/{id}")
 	t.addRule("user/{id}/top")

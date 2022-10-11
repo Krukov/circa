@@ -3,6 +3,7 @@ package rules
 import (
 	"circa/message"
 	"circa/storages"
+	"strings"
 )
 
 type ProxyRule struct {
@@ -22,7 +23,9 @@ func (r *ProxyRule) Process(request *message.Request, key string, storage storag
 		}
 	}
 	if r.Path != "" {
+		fp := strings.Replace(request.FullPath, request.Path, r.Path, 1)
 		request.Path = r.Path
+		request.FullPath = fp
 	}
 	return simpleCall(request, call)
 }
