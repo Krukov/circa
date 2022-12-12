@@ -5,7 +5,7 @@
   |                                            |
 ```
 
-Fast, smart and simple car side caching proxy
+Fast, smart and simple sidecar caching proxy
  - Simple configuration with json config or managment api
  - Cache stampede problem solution
  - Ratelimits
