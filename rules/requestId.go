@@ -8,14 +8,14 @@ import (
 )
 
 type RequestIDRule struct {
-	SkipCheckReturn bool
+	CheckReturn bool
 	HeaderName      string
 }
 
 func (r *RequestIDRule) Process(request *message.Request, key string, storage storages.Storage, call message.Requester) (*message.Response, bool, error) {
 	var requestID string
-	if _, ok := request.Headers[r.HeaderName]; ok {
-		requestID = request.Headers[r.HeaderName]
+	if value := request.GetHeader(r.HeaderName); value != "" {
+		requestID = value
 	} else {
 		requestID = uuid.NewString()
 	}
@@ -25,7 +25,7 @@ func (r *RequestIDRule) Process(request *message.Request, key string, storage st
 	if err != nil {
 		return nil, false, err
 	}
-	if !r.SkipCheckReturn && requestID != resp.GetHeader(r.HeaderName) {
+	if r.CheckReturn && requestID != resp.GetHeader(r.HeaderName) {
 		request.Logger.Warn().Msgf("Request id of response doesn't match request value %v != %v", resp.GetHeader(r.HeaderName), requestID)
 	}
 	resp.SetHeader(r.HeaderName, requestID)

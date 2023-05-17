@@ -135,12 +135,12 @@ Specify target host and timeout for forwarding requests
 ```
 
 
-7. request_id -  `skip_return` - check that backend return response with tha same request ID
+7. request_id -  `check_return` - check that backend return response with tha same request ID
 ```json
 {
     "kind": "request_id",
     "methods": ["GET", "POST", "DELETE", "PUT", "PATCH"],
-    "skip_return": false // by default
+    "check_return": false // by default
 }
 ```
 

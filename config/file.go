@@ -99,6 +99,7 @@ func (repo *fileConfigRepository) RemoveRule(route, kind, key string) error {
 		}
 		rules = append(rules, rule)
 	}
+	repo.config.Rules[route] = rules
 	return nil
 }
 
@@ -124,7 +125,7 @@ func newFileConfig(path string) (configRepository, error) {
 		path:   path,
 	}
 	if c.Options.DefaultStorage == "" {
-		for name, _ := range c.Storages {
+		for name := range c.Storages {
 			conf.SetDefaultStorage(name)
 			break
 		}

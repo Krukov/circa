@@ -41,7 +41,7 @@ type Rule struct {
 
 	HeaderName string `json:"header,omitempty"`
 
-	SkipReturnRequestId bool `json:"skip_return,omitempty"`
+	CheckReturnRequestId bool `json:"check_return,omitempty"`
 
 	Response string `json:"response,omitempty"`
 

@@ -136,7 +136,7 @@ func convertToRequestIDRule(rule Rule) (*rules.RequestIDRule, error) {
 	if header == "" {
 		header = "X-Request-ID"
 	}
-	return &rules.RequestIDRule{HeaderName: header, SkipCheckReturn: rule.SkipReturnRequestId}, nil
+	return &rules.RequestIDRule{HeaderName: header, CheckReturn: rule.CheckReturnRequestId}, nil
 }
 
 func convertToProxyHeaderRule(rule Rule) (*rules.ProxyHeaderRule, error) {
@@ -154,6 +154,9 @@ func convertToGlueRule(rule Rule) (*rules.GlueRule, error) {
 
 func convertToCircuitBreakerRule(rule Rule) (*rules.CircuitBreaker, error) {
 	ttl, err := timeFromString(rule.TTL)
+	if err != nil {
+		return nil, err
+	}
 	openttl, err := timeFromString(rule.OpenTTL)
 	return &rules.CircuitBreaker{TTL: ttl, ErrorRate: rule.ErrorRate, MinCalls: rule.MinCalls, OpenTTL: openttl}, err
 }

@@ -24,14 +24,6 @@ func NewResponse(status int, body []byte, headers map[string]string) *Response {
 	return &Response{Status: status, Body: body, headers: headers, hmutex: sync.RWMutex{}}
 }
 
-func (r *Response) AddHandlers(headers map[string]string) {
-	r.hmutex.Lock()
-	defer r.hmutex.Unlock()
-	for h, value := range headers {
-		r.headers[h] = value
-	}
-}
-
 func (r *Response) SetHeader(name string, value string) {
 	r.hmutex.Lock()
 	defer r.hmutex.Unlock()
@@ -75,4 +67,18 @@ type Request struct {
 	Skip    bool
 
 	Logger zerolog.Logger
+}
+
+func (r *Request) GetHeader(name string) string {
+	// fast path
+	if v, ok := r.Headers[name]; ok {
+		return v
+	}
+	lName := strings.ToLower(name)
+	for header, value := range r.Headers {
+		if lName == strings.ToLower(header) {
+			return value
+		}
+	}
+	return ""
 }

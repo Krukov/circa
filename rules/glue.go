@@ -44,7 +44,7 @@ func copyRequest(req *message.Request, path string) *message.Request {
 	fp := strings.Replace(req.FullPath, req.Path, path, 1)
 	headers := map[string]string{}
 	for n, h := range req.Headers {
-	    headers[n] = h
+		headers[n] = h
 	}
 	r := message.Request{
 		FullPath: fp,

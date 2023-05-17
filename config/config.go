@@ -52,6 +52,7 @@ func (c *Config) Init() error {
 		return err
 	}
 	for _, rule := range rules {
+		log.Info().Msgf("Rule added '%v' for route '%v'", rule.Name, rule.Route)
 		c.resolver.Add(rule)
 	}
 	return nil

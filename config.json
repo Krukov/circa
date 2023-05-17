@@ -5,16 +5,35 @@
 		"mem": "mem://"
 	},
 	"rules": {
+		"*": [
+			{
+				"kind": "request-id",
+				"condition": {
+					"duration": "0s"
+				},
+				"Route": ""
+			},
+			{
+				"kind": "proxy-header",
+				"condition": {
+					"duration": "0s"
+				},
+				"header": "X-Test",
+				"Route": ""
+			}
+		],
 		"/api/*": [
 			{
 				"kind": "proxy",
 				"key": "test",
-				"target": "http://localhost:3001",
-				"path": "/api/*",
 				"condition": {
 					"header": "X-Test",
-					"should_header_value": "1"
-				}
+					"should_header_value": "1",
+					"duration": "0s"
+				},
+				"target": "http://localhost:3001",
+				"path": "/api/*",
+				"Route": ""
 			}
 		],
 		"/posts/": [
@@ -22,7 +41,11 @@
 				"kind": "cache",
 				"key": "posts:key:{R:query}",
 				"storage": "main",
-				"ttl": "10m"
+				"ttl": "10m",
+				"condition": {
+					"duration": "0s"
+				},
+				"Route": ""
 			},
 			{
 				"kind": "idempotency",
@@ -30,7 +53,11 @@
 				"methods": [
 					"POST"
 				],
-				"ttl": "10s"
+				"ttl": "10s",
+				"condition": {
+					"duration": "0s"
+				},
+				"Route": ""
 			}
 		],
 		"/posts/3": [
@@ -42,22 +69,44 @@
 					"DELETE",
 					"PUT",
 					"PATCH"
-				]
+				],
+				"condition": {
+					"duration": "0s"
+				},
+				"Route": ""
 			}
 		],
 		"/posts/4": [
 			{
 				"kind": "static",
-				"response": "{\"status\": \"ok\"}"
+				"condition": {
+					"duration": "0s"
+				},
+				"response": "{\"status\": \"ok\"}",
+				"Route": ""
 			}
 		],
 		"/posts/{id}": [
 			{
 				"kind": "glue",
+				"condition": {
+					"duration": "0s"
+				},
+				"Route": "",
 				"calls": {
 					"post_main": "/posts/{id}",
 					"post_meta": "/post_meta/{id}"
 				}
+			},
+			{
+				"kind": "cache",
+				"key": "post:{id}",
+				"storage": "main",
+				"ttl": "1m",
+				"condition": {
+					"duration": "0s"
+				},
+				"Route": ""
 			},
 			{
 				"kind": "invalidate",
@@ -66,7 +115,11 @@
 					"DELETE",
 					"PUT",
 					"PATCH"
-				]
+				],
+				"condition": {
+					"duration": "0s"
+				},
+				"Route": ""
 			},
 			{
 				"kind": "invalidate",
@@ -75,33 +128,51 @@
 					"DELETE",
 					"PUT",
 					"PATCH"
-				]
+				],
+				"condition": {
+					"duration": "0s"
+				},
+				"Route": ""
 			}
 		],
 		"/static/*": [
 			{
 				"kind": "cache",
 				"key": "{R:full_path}",
-				"ttl": "1m"
+				"ttl": "1m",
+				"condition": {
+					"duration": "0s"
+				},
+				"Route": ""
 			}
 		],
 		"hit/posts": [
 			{
 				"kind": "proxy",
-				"path": "posts/"
+				"condition": {
+					"duration": "0s"
+				},
+				"path": "posts/",
+				"Route": ""
 			},
 			{
 				"kind": "proxy-header",
-				"header": "X-Test2"
+				"condition": {
+					"duration": "0s"
+				},
+				"header": "X-Test2",
+				"Route": ""
 			}
 		],
-		"*": [
+		"test": [
 			{
-				"kind": "request-id"
-			},
-			{
-				"kind": "proxy-header",
-				"header": "X-Test"
+				"kind": "skip",
+				"key": "1",
+				"condition": {
+					"duration": "0s"
+				},
+				"path": "test",
+				"Route": ""
 			}
 		]
 	},

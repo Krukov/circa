@@ -4,7 +4,6 @@ import (
 	"circa/config"
 	"encoding/json"
 	"net/http"
-	"time"
 )
 
 type configManage struct {
@@ -30,14 +29,6 @@ func (cm *configManage) Sync(w http.ResponseWriter, r *http.Request) {
 type errorResponse struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
-}
-
-func timeFromString(in string) time.Duration {
-	res, err := time.ParseDuration(in)
-	if in == "" || err != nil {
-		return time.Second
-	}
-	return res
 }
 
 func writeError(w http.ResponseWriter, err *errorResponse) {
